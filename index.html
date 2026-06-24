@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mecha - Asistente Virtual</title>
+  
+  <!-- SCRIPT OFICIAL DE MESSENGER -->
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+  
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4edf7; /* Fondo lila sutil de pantalla */
+      font-family: 'Segoe UI', Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* Contenedor horizontal premium */
+    .caja-mecha-premium {
+      width: 100%;
+      max-width: 500px;
+      height: 80vh;
+      max-height: 600px;
+      position: relative;
+    }
+
+    /* PERSONALIZACIÓN VIOLETA DE GOOGLE */
+    df-messenger {
+      --df-messenger-brand-color: #8E44AD;            /* Cabecera Morada */
+      --df-messenger-font-color: #ffffff;             /* Texto blanco */
+      --df-messenger-user-message-background: #8E44AD; /* Burbujas del usuario moradas */
+      --df-messenger-bot-message-background: #f0e6f5;  /* Respuestas de Mecha en lila suave */
+      --df-messenger-chat-background-color: #ffffff;
+      
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="caja-mecha-premium">
+  <df-messenger
+    intent="WELCOME"
+    chat-title="Mecha"
+    agent-id="e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
+    language-code="es"
+    expand="true">
+  </df-messenger>
+</div>
+
+</body>
+</html>
