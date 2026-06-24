@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mecha - Asistente Virtual</title>
+  <style>
+    /* Fondo de la página externa */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4edf7; /* Un lila muy suave de fondo */
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Caja del chat que contiene a Mecha */
+    .contenedor-chat {
+      width: 100%;
+      max-width: 450px; /* Tamaño ideal de celular en la pantalla */
+      height: 85vh;     /* Ocupa casi todo el alto */
+      border: 3px solid #8E44AD; /* Borde Morado */
+      border-radius: 16px;
+      overflow: hidden;
+      background-color: #ffffff;
+      box-shadow: 0 12px 30px rgba(142, 68, 173, 0.2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Tu cabecera institucional */
+    .cabecera-mecha {
+      background-color: #8E44AD;
+      color: #ffffff;
+      padding: 16px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    /* El espacio donde corre el chat */
+    .cuerpo-chat {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* EL TRUCO: Subimos el iframe para tapar la barra gris original de Google */
+    iframe {
+      position: absolute;
+      top: -50px;
+      left: 0;
+      width: 100%;
+      height: calc(100% + 50px);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="contenedor-chat">
+  <div class="cabecera-mecha">Mecha</div>
+  
+  <div class="cuerpo-chat">
+    <iframe 
+      allow="microphone;" 
+      src="https://console.dialogflow.com/api-client/demo/embedded/e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3">
+    </iframe>
+  </div>
+</div>
+
+</body>
+</html>
