@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
-  
-  <!-- TU SCRIPT EXACTO (El que destraba la pantalla en blanco) -->
-  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-  
   <style>
     html, body {
       margin: 0;
@@ -20,43 +16,61 @@
       align-items: center;
     }
 
-    /* Caja contenedora estilo aplicación moderna */
+    /* Tu hermosa caja contenedora horizontal tipo App */
     .contenedor-mecha {
       width: 100%;
-      max-width: 480px; /* Ancho ideal para que se vea cómodo en PC y Notebooks */
-      height: 90vh;
+      max-width: 460px;
+      height: 85vh;
       max-height: 650px;
       background-color: #ffffff;
-      box-shadow: 0 12px 30px rgba(142, 68, 173, 0.2);
+      box-shadow: 0 12px 30px rgba(142, 68, 173, 0.25);
+      border: 3px solid #8E44AD; /* Borde morado institucional */
       border-radius: 16px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
       position: relative;
     }
 
-    /* Personalización estética de Mecha */
-    df-messenger {
-      --df-messenger-brand-color: #8E44AD;            /* Cabecera Morada Principal */
-      --df-messenger-font-color: #ffffff;             /* Texto blanco de la cabecera */
-      --df-messenger-chat-background-color: #ffffff;   /* Fondo del panel de chat */
-      --df-messenger-user-message-background: #8E44AD; /* Tus burbujas de chat en morado */
-      --df-messenger-bot-message-background: #f0e6f5;  /* Burbujas de Mecha en lila suave */
-      
-      /* Forzamos a que el elemento llene toda nuestra caja diseñada */
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      height: 100%;
+    /* Tu cabecera violeta personalizada de Mecha */
+    .cabecera-personalizada {
+      background-color: #8E44AD;
+      color: #ffffff;
+      padding: 16px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 0.5px;
+      z-index: 10; /* Se asegura de tapar lo de abajo */
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
 
-    /* Si lo abren desde un celular, se adapta por completo a la pantalla entera */
+    /* El contenedor que va a camuflar el diseño de Google */
+    .zona-chat {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+
+    /* EL TRUCO: Subimos el iframe para ocultar la barra gris original de Dialogflow */
+    iframe {
+      position: absolute;
+      top: -51px; /* Esconde la cabecera gris por completo */
+      left: 0;
+      width: 100%;
+      height: calc(100% + 51px); /* Compensa el espacio ocultado */
+      border: none;
+    }
+
+    /* Adaptación automática para pantallas de celular */
     @media (max-width: 480px) {
       .contenedor-mecha {
         max-width: 100%;
+        height: 100vh;
         max-height: 100vh;
         border-radius: 0;
+        border: none;
       }
     }
   </style>
@@ -64,14 +78,17 @@
 <body>
 
 <div class="contenedor-mecha">
-  <!-- Configuración de Mecha con saludo automático y ventana expandida -->
-  <df-messenger
-    intent="WELCOME"
-    chat-title="Mecha"
-    agent-id="e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
-    language-code="es"
-    expand="true">
-  </df-messenger>
+  <!-- Nuestra cabecera premium hecha a mano -->
+  <div class="cabecera-personalizada">🤖 Mecha - Asistente Virtual</div>
+  
+  <!-- Contenedor del chat -->
+  <div class="zona-chat">
+    <!-- Tu enlace oficial de Web Demo (Este no se bloquea jamás) -->
+    <iframe 
+      src="https://bot.dialogflow.com/e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
+      allow="microphone;">
+    </iframe>
+  </div>
 </div>
 
 </body>
