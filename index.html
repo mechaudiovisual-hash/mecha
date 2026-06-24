@@ -4,60 +4,63 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
-  
-  <!-- SCRIPT OFICIAL DE MESSENGER -->
-  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-  
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #f4edf7; /* Fondo lila sutil de pantalla */
+      background-color: #f4edf7; /* Fondo lila sutil para la pantalla */
       font-family: 'Segoe UI', Arial, sans-serif;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+    }
+
+    /* El cuadrado contenedor que me pediste puesto en VIOLETA */
+    .contenedor-mecha-violeta {
+      width: 350px; /* Ancho exacto del chat */
+      height: 480px; /* Alto del chat (430px) + Alto de nuestra cabecera (50px) */
+      background-color: #ffffff;
+      border: 4px solid #8E44AD; /* TU BORDE VIOLETA HORIZONTAL/ALREDEDOR */
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(142, 68, 173, 0.2);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Contenedor horizontal premium */
-    .caja-mecha-premium {
-      width: 100%;
-      max-width: 500px;
-      height: 80vh;
-      max-height: 600px;
-      position: relative;
+    /* Tu cabecera violeta con el título "Mecha" */
+    .cabecera-titulo {
+      background-color: #8E44AD; /* Violeta Institucional */
+      color: #ffffff; /* Texto Blanco */
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 0.5px;
     }
 
-    /* PERSONALIZACIÓN VIOLETA DE GOOGLE */
-    df-messenger {
-      --df-messenger-brand-color: #8E44AD;            /* Cabecera Morada */
-      --df-messenger-font-color: #ffffff;             /* Texto blanco */
-      --df-messenger-user-message-background: #8E44AD; /* Burbujas del usuario moradas */
-      --df-messenger-bot-message-background: #f0e6f5;  /* Respuestas de Mecha en lila suave */
-      --df-messenger-chat-background-color: #ffffff;
-      
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      height: 100%;
+    /* Tu iframe oficial Web Demo (El único estable que no falla) */
+    iframe {
+      border: none;
+      width: 350px;
+      height: 430px;
+      display: block;
     }
   </style>
 </head>
 <body>
 
-<div class="caja-mecha-premium">
-  <df-messenger
-    intent="WELCOME"
-    chat-title="Mecha"
-    agent-id="e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
-    language-code="es"
-    expand="true">
-  </df-messenger>
+<div class="contenedor-mecha-violeta">
+  <!-- El título que me pediste arriba del cuadrado -->
+  <div class="cabecera-titulo">🤖 Mecha</div>
+  
+  <!-- Tu código Web Demo Estable -->
+  <iframe 
+    src="https://bot.dialogflow.com/e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3">
+  </iframe>
 </div>
 
 </body>
