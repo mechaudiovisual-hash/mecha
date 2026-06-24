@@ -8,87 +8,34 @@
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #f4edf7; /* Fondo lila sutil para la pantalla */
-      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #f4edf7;
+      font-family: Arial, sans-serif;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
     }
-
-    /* Tu hermosa caja contenedora horizontal tipo App */
     .contenedor-mecha {
       width: 100%;
-      max-width: 460px;
-      height: 85vh;
-      max-height: 650px;
+      max-width: 400px;
       background-color: #ffffff;
-      box-shadow: 0 12px 30px rgba(142, 68, 173, 0.25);
-      border: 3px solid #8E44AD; /* Borde morado institucional */
-      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border: 4px solid #8E44AD; /* Borde morado para ver la caja */
+      border-radius: 12px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Tu cabecera violeta personalizada de Mecha */
-    .cabecera-personalizada {
-      background-color: #8E44AD;
-      color: #ffffff;
-      padding: 16px;
-      font-weight: bold;
-      font-size: 18px;
-      text-align: center;
-      letter-spacing: 0.5px;
-      z-index: 10; /* Se asegura de tapar lo de abajo */
-      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    }
-
-    /* El contenedor que va a camuflar el diseño de Google */
-    .zona-chat {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-      background-color: #ffffff;
-    }
-
-    /* EL TRUCO: Subimos el iframe para ocultar la barra gris original de Dialogflow */
-    iframe {
-      position: absolute;
-      top: -51px; /* Esconde la cabecera gris por completo */
-      left: 0;
-      width: 100%;
-      height: calc(100% + 51px); /* Compensa el espacio ocultado */
-      border: none;
-    }
-
-    /* Adaptación automática para pantallas de celular */
-    @media (max-width: 480px) {
-      .contenedor-mecha {
-        max-width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-        border: none;
-      }
     }
   </style>
 </head>
 <body>
 
 <div class="contenedor-mecha">
-  <!-- Nuestra cabecera premium hecha a mano -->
-  <div class="cabecera-personalizada">🤖 Mecha - Asistente Virtual</div>
-  
-  <!-- Contenedor del chat -->
-  <div class="zona-chat">
-    <!-- Tu enlace oficial de Web Demo (Este no se bloquea jamás) -->
-    <iframe 
-      src="https://bot.dialogflow.com/e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
-      allow="microphone;">
-    </iframe>
-  </div>
+  <!-- Iframe directo con altura fija de 500px para que NO pueda colapsar -->
+  <iframe 
+    src="https://bot.dialogflow.com/e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
+    width="100%" 
+    height="500px" 
+    style="border: none; display: block;">
+  </iframe>
 </div>
 
 </body>
