@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
   
-  <!-- Librería Moderna de Dialogflow (En GitHub corre nativa y perfecto) -->
-  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/v1/messenger.js?v=1"></script>
+  <!-- TU SCRIPT EXACTO (El que destraba la pantalla en blanco) -->
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
   
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #f4edf7; /* Fondo lila sutil de pantalla */
+      background-color: #f4edf7; /* Fondo lila sutil para la pantalla */
       font-family: 'Segoe UI', Arial, sans-serif;
       height: 100vh;
       display: flex;
@@ -20,28 +20,28 @@
       align-items: center;
     }
 
-    /* Caja contenedora del chat estilo App Móvil */
+    /* Caja contenedora estilo aplicación moderna */
     .contenedor-mecha {
       width: 100%;
-      max-width: 450px;
-      height: 100vh;
-      max-height: 680px;
+      max-width: 480px; /* Ancho ideal para que se vea cómodo en PC y Notebooks */
+      height: 90vh;
+      max-height: 650px;
       background-color: #ffffff;
-      box-shadow: 0 12px 30px rgba(142, 68, 173, 0.15);
-      position: relative;
+      box-shadow: 0 12px 30px rgba(142, 68, 173, 0.2);
       border-radius: 16px;
       overflow: hidden;
+      position: relative;
     }
 
-    /* ESTILOS EXCLUSIVOS PARA MECHA: Sin textos pegados */
+    /* Personalización estética de Mecha */
     df-messenger {
-      --df-messenger-brand-color: #8E44AD;            /* Cabecera Morada */
-      --df-messenger-font-color: #ffffff;             /* Texto blanco */
-      --df-messenger-chat-background-color: #ffffff;   /* Fondo limpio */
-      --df-messenger-user-message-background: #8E44AD; /* Tus burbujas moradas */
-      --df-messenger-bot-message-background: #f0e6f5;  /* Respuestas de Mecha en lila suave */
-      --df-messenger-button-title-backgound: #8E44AD;
+      --df-messenger-brand-color: #8E44AD;            /* Cabecera Morada Principal */
+      --df-messenger-font-color: #ffffff;             /* Texto blanco de la cabecera */
+      --df-messenger-chat-background-color: #ffffff;   /* Fondo del panel de chat */
+      --df-messenger-user-message-background: #8E44AD; /* Tus burbujas de chat en morado */
+      --df-messenger-bot-message-background: #f0e6f5;  /* Burbujas de Mecha en lila suave */
       
+      /* Forzamos a que el elemento llene toda nuestra caja diseñada */
       position: absolute;
       top: 0;
       left: 0;
@@ -51,7 +51,7 @@
       height: 100%;
     }
 
-    /* Adaptación total si lo abren desde un celular */
+    /* Si lo abren desde un celular, se adapta por completo a la pantalla entera */
     @media (max-width: 480px) {
       .contenedor-mecha {
         max-width: 100%;
@@ -64,6 +64,7 @@
 <body>
 
 <div class="contenedor-mecha">
+  <!-- Configuración de Mecha con saludo automático y ventana expandida -->
   <df-messenger
     intent="WELCOME"
     chat-title="Mecha"
