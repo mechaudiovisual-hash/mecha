@@ -4,64 +4,291 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
+
+  <!-- Script oficial de Dialogflow ES Messenger (CDN Google, sin XSS) -->
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+
   <style>
+    /* ─── Reset base ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #f4edf7; /* Fondo lila sutil para la pantalla */
+      width: 100%;
+      height: 100%;
+      background-color: #f4edf7;
       font-family: 'Segoe UI', Arial, sans-serif;
-      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden; /* evita doble scroll en Google Sites */
     }
 
-    /* El cuadrado contenedor que me pediste puesto en VIOLETA */
-    .contenedor-mecha-violeta {
-      width: 350px; /* Ancho exacto del chat */
-      height: 480px; /* Alto del chat (430px) + Alto de nuestra cabecera (50px) */
-      background-color: #ffffff;
-      border: 4px solid #8E44AD; /* TU BORDE VIOLETA HORIZONTAL/ALREDEDOR */
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(142, 68, 173, 0.2);
+    /* ─── Ocultar launcher flotante — capa light DOM ────────────────── */
+    df-messenger-chat-bubble {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* ─── Contenedor principal ──────────────────────────────────────── */
+    .caja-mecha-premium {
+      width: 100%;
+      max-width: 500px;
+      height: 80vh;
+      max-height: 600px;
+      position: relative;
+      border-radius: 16px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      box-shadow:
+        0 8px 32px rgba(142, 68, 173, 0.25),
+        0 2px 8px  rgba(142, 68, 173, 0.10);
     }
 
-    /* Tu cabecera violeta con el título "Mecha" */
-    .cabecera-titulo {
-      background-color: #8E44AD; /* Violeta Institucional */
-      color: #ffffff; /* Texto Blanco */
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
-      letter-spacing: 0.5px;
+    /* ─── Web Component: ocupa todo el contenedor ───────────────────── */
+    /* Las CSS custom properties se declaran aquí Y en el atributo       */
+    /* style del elemento para máxima especificidad en el light DOM.     */
+    df-messenger {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+
+      /* Color de marca principal */
+      --df-messenger-brand-color:                    #8E44AD;
+
+      /* Cabecera */
+      --df-messenger-titlebar-background:            #8E44AD;
+      --df-messenger-titlebar-font-color:            #ffffff;
+      --df-messenger-titlebar-icon-color:            #ffffff;
+
+      /* Burbujas del bot (lila suave, texto oscuro) */
+      --df-messenger-message-bot-background:         #f0e5fc;
+      --df-messenger-message-bot-font-color:         #2d0052;
+
+      /* Burbujas del usuario (violeta, texto blanco) */
+      --df-messenger-message-user-background:        #8E44AD;
+      --df-messenger-message-user-font-color:        #ffffff;
+
+      /* Fondo del área de mensajes */
+      --df-messenger-chat-background-color:          #faf5ff;
+
+      /* Barra de entrada de texto */
+      --df-messenger-input-box-color:                #f3e8ff;
+      --df-messenger-input-font-color:               #2d0052;
+      --df-messenger-input-placeholder-font-color:   #9b7bb8;
+
+      /* Botón de enviar */
+      --df-messenger-send-icon:                      #8E44AD;
+
+      /* Chips / sugerencias rápidas */
+      --df-messenger-button-background:              #f0e5fc;
+      --df-messenger-button-font-color:              #6C2D9E;
+      --df-messenger-button-border:                  1px solid #8E44AD;
+
+      /* Tipografía */
+      --df-messenger-font-color:                     #2d0052;
+      --df-messenger-font-family:                    'Segoe UI', Arial, sans-serif;
     }
 
-    /* Tu iframe oficial Web Demo (El único estable que no falla) */
-    iframe {
-      border: none;
-      width: 350px;
-      height: 430px;
-      display: block;
+
+    /* ══════════════════════════════════════════════════════════════════
+       MEDIA QUERIES — RESPONSIVE
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* Tablets (≤ 768px) */
+    @media (max-width: 768px) {
+      .caja-mecha-premium {
+        max-width: 100%;
+        width: calc(100% - 16px);
+        height: 85vh;
+        max-height: none;
+        border-radius: 12px;
+      }
+    }
+
+    /* Móviles (≤ 480px): pantalla completa, sin márgenes */
+    @media (max-width: 480px) {
+      html, body { align-items: stretch; }
+      .caja-mecha-premium {
+        width: 100%;
+        max-width: 100%;
+        height: 100vh;
+        height: 100dvh; /* descuenta barra del navegador en Chrome/Safari */
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    /* Android compacto (≤ 360px) */
+    @media (max-width: 360px) {
+      .caja-mecha-premium { height: 100%; }
     }
   </style>
 </head>
 <body>
 
-<div class="contenedor-mecha-violeta">
-  <!-- El título que me pediste arriba del cuadrado -->
-  <div class="cabecera-titulo">🤖 Mecha</div>
-  
-  <!-- Tu código Web Demo Estable -->
-  <iframe 
-    src="https://bot.dialogflow.com/e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3">
-  </iframe>
-</div>
+  <div class="caja-mecha-premium">
+    <!--
+      El atributo style repite --df-messenger-brand-color como segunda
+      capa de especificidad sobre el light DOM. expand="true" fuerza
+      el chat abierto sin botón flotante.
+    -->
+    <df-messenger
+      intent="WELCOME"
+      chat-title="Mecha"
+      agent-id="e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
+      language-code="es"
+      expand="true"
+      style="--df-messenger-brand-color:#8E44AD;">
+    </df-messenger>
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════════════════════════════════
+       PALETA DE COLORES
+    ══════════════════════════════════════════════════════════════════ */
+    var V = {
+      violeta:  '#8E44AD',
+      oscuro:   '#6C2D9E',
+      blanco:   '#ffffff',
+      lila:     '#f0e5fc',
+      lavanda:  '#faf5ff',
+      inputBg:  '#f3e8ff',
+      textDark: '#2d0052',
+      placeholder: '#9b7bb8'
+    };
+
+    /* ══════════════════════════════════════════════════════════════════
+       CSS QUE SE INYECTA EN CADA NIVEL DEL SHADOW DOM
+       Dialogflow tiene hasta 3 niveles de Shadow Root anidados:
+         df-messenger → df-messenger-chat → df-messenger-titlebar
+       Las CSS custom properties del exterior NO siempre penetran todos
+       los niveles; por eso se inyecta un <style> en cada Shadow Root.
+    ══════════════════════════════════════════════════════════════════ */
+    function generarCSS() {
+      return [
+        /* Variables en el host para que los hijos las hereden */
+        ':host {',
+        '  --df-messenger-brand-color: '          + V.violeta + ' !important;',
+        '  --df-messenger-titlebar-background: '  + V.violeta + ' !important;',
+        '  --df-messenger-titlebar-font-color: '  + V.blanco  + ' !important;',
+        '  --df-messenger-titlebar-icon-color: '  + V.blanco  + ' !important;',
+        '}',
+
+        /* Titlebar: todos los selectores conocidos en v1 de bootstrap.js */
+        'df-messenger-titlebar,',
+        '[part="titlebar"],',
+        '.df-messenger-titlebar,',
+        '.title-wrapper,',
+        '.header {',
+        '  background:       ' + V.violeta + ' !important;',
+        '  background-color: ' + V.violeta + ' !important;',
+        '}',
+
+        /* Texto del título */
+        '.title, [part="title"], df-messenger-titlebar span, h1, h2 {',
+        '  color: ' + V.blanco + ' !important;',
+        '}',
+
+        /* Iconos del titlebar (X para cerrar, etc.) */
+        'df-messenger-titlebar svg path,',
+        '[part="close-icon"],',
+        '.material-icons {',
+        '  fill:  ' + V.blanco + ' !important;',
+        '  color: ' + V.blanco + ' !important;',
+        '}',
+
+        /* FAB / launcher button: oculto en todos los niveles */
+        'df-messenger-chat-bubble,',
+        '[part="chat-bubble"],',
+        'df-messenger-button {',
+        '  display:         none    !important;',
+        '  visibility:      hidden  !important;',
+        '  pointer-events:  none    !important;',
+        '}'
+      ].join('\n');
+    }
+
+    /* ── Inyecta un <style> en un shadowRoot sin duplicar ─────────── */
+    function inyectar(shadowRoot, id) {
+      if (!shadowRoot) return;
+      if (shadowRoot.querySelector('#' + id)) return; /* ya inyectado */
+      var el = document.createElement('style');
+      el.id = id;
+      el.textContent = generarCSS();
+      try { shadowRoot.appendChild(el); } catch (e) { /* silencioso */ }
+    }
+
+    /* ── Aplicar violeta en los 3 niveles del Shadow DOM ─────────── */
+    function aplicarVioleta() {
+      var df = document.querySelector('df-messenger');
+      if (!df) return;
+
+      /* Nivel 1: df-messenger */
+      inyectar(df.shadowRoot, 'mecha-n1');
+      if (!df.shadowRoot) return;
+
+      /* Nivel 2: df-messenger-chat */
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (dfChat) {
+        inyectar(dfChat.shadowRoot, 'mecha-n2');
+        if (!dfChat.shadowRoot) return;
+
+        /* Nivel 3: df-messenger-titlebar */
+        var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
+        if (dfTitle) {
+          inyectar(dfTitle.shadowRoot, 'mecha-n3');
+
+          /* Último recurso: estilo inline directo sobre el elemento */
+          dfTitle.style.setProperty('background',       V.violeta, 'important');
+          dfTitle.style.setProperty('background-color', V.violeta, 'important');
+        }
+      }
+    }
+
+    /* ── Ocultar launcher flotante — Shadow DOM ───────────────────── */
+    function ocultarLauncher() {
+      var df = document.querySelector('df-messenger');
+      if (!df) return;
+      var sels = [
+        'df-messenger-chat-bubble',
+        '[part="chat-bubble"]',
+        '.df-messenger-chat-bubble',
+        'df-messenger-button'
+      ];
+      [df, df.shadowRoot].forEach(function (root) {
+        if (!root) return;
+        sels.forEach(function (sel) {
+          try {
+            var el = root.querySelector(sel);
+            if (el) {
+              el.style.cssText =
+                'display:none!important;' +
+                'visibility:hidden!important;' +
+                'pointer-events:none!important;';
+            }
+          } catch (e) {}
+        });
+      });
+    }
+
+    /* ── Ejecutar al cargar el componente ────────────────────────── */
+    window.addEventListener('dfMessengerLoaded', function () {
+      aplicarVioleta();
+      ocultarLauncher();
+    });
+
+    /* ── Fallbacks escalonados para carga asíncrona ──────────────── */
+    [200, 600, 1200, 2500, 4000].forEach(function (ms) {
+      setTimeout(function () {
+        aplicarVioleta();
+        ocultarLauncher();
+      }, ms);
+    });
+  </script>
 
 </body>
 </html>
