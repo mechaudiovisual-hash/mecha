@@ -22,22 +22,57 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden; /* evita doble scroll en Google Sites */
+      overflow: hidden;
     }
 
-    /* ─── Ocultar launcher flotante — capa light DOM ────────────────── */
-    df-messenger-chat-bubble {
+    /* ─── FULMINAR LAUNCHER Y FORZAR INCUSTRARE HORIZONTAL ─────────── */
+    df-messenger {
+      position: relative !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+
+      /* Dimensiones fijas horizontales */
+      --df-messenger-chat-window-width: 100% !important;
+      --df-messenger-chat-window-height: 350px !important;
+      --df-messenger-shadow-wrapper-background: transparent !important;
+
+      /* Paleta Violeta */
+      --df-messenger-brand-color: #8E44AD !important;
+      --df-messenger-titlebar-background: #8E44AD !important;
+      --df-messenger-titlebar-font-color: #ffffff !important;
+      --df-messenger-titlebar-icon-color: #ffffff !important;
+
+      /* Burbujas y Fondos */
+      --df-messenger-message-bot-background: #f0e5fc !important;
+      --df-messenger-message-bot-font-color: #2d0052 !important;
+      --df-messenger-message-user-background: #8E44AD !important;
+      --df-messenger-message-user-font-color: #ffffff !important;
+      --df-messenger-chat-background-color: #faf5ff !important;
+
+      /* Caja de texto inferior */
+      --df-messenger-input-box-color: #f3e8ff !important;
+      --df-messenger-input-font-color: #2d0052 !important;
+      --df-messenger-input-placeholder-font-color: #9b7bb8 !important;
+      --df-messenger-send-icon: #8E44AD !important;
+    }
+
+    /* Ocultar el botón flotante (launcher) por CSS estándar y por partes */
+    df-messenger::part(launcher),
+    df-messenger-chat-bubble,
+    .df-messenger-chat-bubble,
+    button#widgetIcon {
       display: none !important;
       visibility: hidden !important;
-      pointer-events: none !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
     }
 
-    /* ─── Contenedor principal ──────────────────────────────────────── */
+    /* ─── Contenedor HORIZONTAL RECTANGULAR ───────────────────────── */
     .caja-mecha-premium {
-      width: 100%;
-      max-width: 500px;
-      height: 80vh;
-      max-height: 600px;
+      width: min(96vw, 960px);
+      height: 350px !important; /* Altura chata para formato horizontal */
       position: relative;
       border-radius: 16px;
       overflow: hidden;
@@ -46,248 +81,77 @@
         0 2px 8px  rgba(142, 68, 173, 0.10);
     }
 
-    /* ─── Web Component: ocupa todo el contenedor ───────────────────── */
-    /* Las CSS custom properties se declaran aquí Y en el atributo       */
-    /* style del elemento para máxima especificidad en el light DOM.     */
-    df-messenger {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-
-      /* Color de marca principal */
-      --df-messenger-brand-color:                    #8E44AD;
-
-      /* Cabecera */
-      --df-messenger-titlebar-background:            #8E44AD;
-      --df-messenger-titlebar-font-color:            #ffffff;
-      --df-messenger-titlebar-icon-color:            #ffffff;
-
-      /* Burbujas del bot (lila suave, texto oscuro) */
-      --df-messenger-message-bot-background:         #f0e5fc;
-      --df-messenger-message-bot-font-color:         #2d0052;
-
-      /* Burbujas del usuario (violeta, texto blanco) */
-      --df-messenger-message-user-background:        #8E44AD;
-      --df-messenger-message-user-font-color:        #ffffff;
-
-      /* Fondo del área de mensajes */
-      --df-messenger-chat-background-color:          #faf5ff;
-
-      /* Barra de entrada de texto */
-      --df-messenger-input-box-color:                #f3e8ff;
-      --df-messenger-input-font-color:               #2d0052;
-      --df-messenger-input-placeholder-font-color:   #9b7bb8;
-
-      /* Botón de enviar */
-      --df-messenger-send-icon:                      #8E44AD;
-
-      /* Chips / sugerencias rápidas */
-      --df-messenger-button-background:              #f0e5fc;
-      --df-messenger-button-font-color:              #6C2D9E;
-      --df-messenger-button-border:                  1px solid #8E44AD;
-
-      /* Tipografía */
-      --df-messenger-font-color:                     #2d0052;
-      --df-messenger-font-family:                    'Segoe UI', Arial, sans-serif;
-    }
-
-
     /* ══════════════════════════════════════════════════════════════════
-       MEDIA QUERIES — RESPONSIVE
-    ══════════════════════════════════════════════════════════════════ */
-
-    /* Tablets (≤ 768px) */
+       MEDIA QUERIES — RESPONSIVE MÓVIL
+       ══════════════════════════════════════════════════════════════════ */
     @media (max-width: 768px) {
       .caja-mecha-premium {
-        max-width: 100%;
         width: calc(100% - 16px);
-        height: 85vh;
-        max-height: none;
-        border-radius: 12px;
+        height: 380px !important;
       }
     }
 
-    /* Móviles (≤ 480px): pantalla completa, sin márgenes */
     @media (max-width: 480px) {
       html, body { align-items: stretch; }
       .caja-mecha-premium {
         width: 100%;
-        max-width: 100%;
-        height: 100vh;
-        height: 100dvh; /* descuenta barra del navegador en Chrome/Safari */
-        max-height: none;
+        height: 100vh !important;
+        height: 100dvh !important;
         border-radius: 0;
         box-shadow: none;
       }
-    }
-
-    /* Android compacto (≤ 360px) */
-    @media (max-width: 360px) {
-      .caja-mecha-premium { height: 100%; }
     }
   </style>
 </head>
 <body>
 
+  <!-- El truco maestro: El chat dentro de la caja premium -->
   <div class="caja-mecha-premium">
-    <!--
-      El atributo style repite --df-messenger-brand-color como segunda
-      capa de especificidad sobre el light DOM. expand="true" fuerza
-      el chat abierto sin botón flotante.
-    -->
     <df-messenger
       intent="WELCOME"
       chat-title="Mecha"
       agent-id="e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
       language-code="es"
-      expand="true"
-      style="--df-messenger-brand-color:#8E44AD;">
+      expand="true">
     </df-messenger>
   </div>
 
   <script>
-    /* ══════════════════════════════════════════════════════════════════
-       PALETA DE COLORES
-    ══════════════════════════════════════════════════════════════════ */
-    var V = {
-      violeta:  '#8E44AD',
-      oscuro:   '#6C2D9E',
-      blanco:   '#ffffff',
-      lila:     '#f0e5fc',
-      lavanda:  '#faf5ff',
-      inputBg:  '#f3e8ff',
-      textDark: '#2d0052',
-      placeholder: '#9b7bb8'
-    };
-
-    /* ══════════════════════════════════════════════════════════════════
-       CSS QUE SE INYECTA EN CADA NIVEL DEL SHADOW DOM
-       Dialogflow tiene hasta 3 niveles de Shadow Root anidados:
-         df-messenger → df-messenger-chat → df-messenger-titlebar
-       Las CSS custom properties del exterior NO siempre penetran todos
-       los niveles; por eso se inyecta un <style> en cada Shadow Root.
-    ══════════════════════════════════════════════════════════════════ */
-    function generarCSS() {
-      return [
-        /* Variables en el host para que los hijos las hereden */
-        ':host {',
-        '  --df-messenger-brand-color: '          + V.violeta + ' !important;',
-        '  --df-messenger-titlebar-background: '  + V.violeta + ' !important;',
-        '  --df-messenger-titlebar-font-color: '  + V.blanco  + ' !important;',
-        '  --df-messenger-titlebar-icon-color: '  + V.blanco  + ' !important;',
-        '}',
-
-        /* Titlebar: todos los selectores conocidos en v1 de bootstrap.js */
-        'df-messenger-titlebar,',
-        '[part="titlebar"],',
-        '.df-messenger-titlebar,',
-        '.title-wrapper,',
-        '.header {',
-        '  background:       ' + V.violeta + ' !important;',
-        '  background-color: ' + V.violeta + ' !important;',
-        '}',
-
-        /* Texto del título */
-        '.title, [part="title"], df-messenger-titlebar span, h1, h2 {',
-        '  color: ' + V.blanco + ' !important;',
-        '}',
-
-        /* Iconos del titlebar (X para cerrar, etc.) */
-        'df-messenger-titlebar svg path,',
-        '[part="close-icon"],',
-        '.material-icons {',
-        '  fill:  ' + V.blanco + ' !important;',
-        '  color: ' + V.blanco + ' !important;',
-        '}',
-
-        /* FAB / launcher button: oculto en todos los niveles */
-        'df-messenger-chat-bubble,',
-        '[part="chat-bubble"],',
-        'df-messenger-button {',
-        '  display:         none    !important;',
-        '  visibility:      hidden  !important;',
-        '  pointer-events:  none    !important;',
-        '}'
-      ].join('\n');
-    }
-
-    /* ── Inyecta un <style> en un shadowRoot sin duplicar ─────────── */
-    function inyectar(shadowRoot, id) {
-      if (!shadowRoot) return;
-      if (shadowRoot.querySelector('#' + id)) return; /* ya inyectado */
-      var el = document.createElement('style');
-      el.id = id;
-      el.textContent = generarCSS();
-      try { shadowRoot.appendChild(el); } catch (e) { /* silencioso */ }
-    }
-
-    /* ── Aplicar violeta en los 3 niveles del Shadow DOM ─────────── */
-    function aplicarVioleta() {
+    /* Inyección forzada en tiempo real para ganarle la pulseada al script de Google */
+    function domarComponente() {
       var df = document.querySelector('df-messenger');
       if (!df) return;
 
-      /* Nivel 1: df-messenger */
-      inyectar(df.shadowRoot, 'mecha-n1');
-      if (!df.shadowRoot) return;
+      // Forzar que el chat interno ocupe el contenedor horizontal sin estirarse al infinito vertical
+      try {
+        var styleN1 = df.shadowRoot.querySelector('#mecha-override') || document.createElement('style');
+        styleN1.id = 'mecha-override';
+        styleN1.textContent = `
+          .df-messenger-wrapper, .chat-wrapper, df-messenger-chat { 
+            width: 100% !important; 
+            height: 350px !important; 
+            max-height: 350px !important;
+          }
+          button#widgetIcon, .df-messenger-chat-bubble { display: none !important; }
+        `;
+        df.shadowRoot.appendChild(styleN1);
 
-      /* Nivel 2: df-messenger-chat */
-      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
-      if (dfChat) {
-        inyectar(dfChat.shadowRoot, 'mecha-n2');
-        if (!dfChat.shadowRoot) return;
-
-        /* Nivel 3: df-messenger-titlebar */
-        var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
-        if (dfTitle) {
-          inyectar(dfTitle.shadowRoot, 'mecha-n3');
-
-          /* Último recurso: estilo inline directo sobre el elemento */
-          dfTitle.style.setProperty('background',       V.violeta, 'important');
-          dfTitle.style.setProperty('background-color', V.violeta, 'important');
+        var chat = df.shadowRoot.querySelector('df-messenger-chat');
+        if (chat && chat.shadowRoot) {
+          var styleN2 = chat.shadowRoot.querySelector('#mecha-override-chat') || document.createElement('style');
+          styleN2.id = 'mecha-override-chat';
+          styleN2.textContent = `
+            .chat-window { height: 350px !important; max-height: 350px !important; width: 100% !important; box-shadow: none !important; }
+            df-messenger-titlebar { background-color: #8E44AD !important; }
+          `;
+          chat.shadowRoot.appendChild(styleN2);
         }
-      }
+      } catch (e) {}
     }
 
-    /* ── Ocultar launcher flotante — Shadow DOM ───────────────────── */
-    function ocultarLauncher() {
-      var df = document.querySelector('df-messenger');
-      if (!df) return;
-      var sels = [
-        'df-messenger-chat-bubble',
-        '[part="chat-bubble"]',
-        '.df-messenger-chat-bubble',
-        'df-messenger-button'
-      ];
-      [df, df.shadowRoot].forEach(function (root) {
-        if (!root) return;
-        sels.forEach(function (sel) {
-          try {
-            var el = root.querySelector(sel);
-            if (el) {
-              el.style.cssText =
-                'display:none!important;' +
-                'visibility:hidden!important;' +
-                'pointer-events:none!important;';
-            }
-          } catch (e) {}
-        });
-      });
-    }
-
-    /* ── Ejecutar al cargar el componente ────────────────────────── */
-    window.addEventListener('dfMessengerLoaded', function () {
-      aplicarVioleta();
-      ocultarLauncher();
-    });
-
-    /* ── Fallbacks escalonados para carga asíncrona ──────────────── */
-    [200, 600, 1200, 2500, 4000].forEach(function (ms) {
-      setTimeout(function () {
-        aplicarVioleta();
-        ocultarLauncher();
-      }, ms);
-    });
+    // Ejecutar inmediatamente y con intervalos por si Google tarda en renderizar
+    window.addEventListener('dfMessengerLoaded', domarComponente);
+    [100, 500, 1000, 2000].forEach(ms => setTimeout(domarComponente, ms));
   </script>
 
 </body>
