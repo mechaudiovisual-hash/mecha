@@ -26,11 +26,11 @@
     }
 
     /* ─── Contenedor HORIZONTAL ──────────────────────────────────────
-       Desktop: ancho 100% (se estira a los costados) y altura baja 350px
+       Desktop: ancho 100% (se estira a los costados) y altura 600px
     ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
       width: 100% !important;
-      height: 350px !important;
+      height: 600px !important;
       max-width: none !important;
       position: relative;
       border-radius: 16px;
@@ -124,7 +124,7 @@
     @media (max-width: 768px) {
       .caja-mecha-premium {
         width: 100% !important;
-        height: 380px !important;
+        height: 500px !important;
         border-radius: 12px;
       }
     }
@@ -180,11 +180,6 @@
          df-messenger (N1)
            └── df-messenger-chat (N2)
                  └── df-messenger-titlebar (N3)
-
-       Se inyecta un <style> en cada nivel para:
-         1. Forzar ancho 100% en el wrapper interno del chat
-         2. Violeta en la cabecera
-         3. Ocultar el botón launcher desde adentro
     ══════════════════════════════════════════════════════════════════ */
     function generarCSS() {
       return [
@@ -198,7 +193,6 @@
         '}',
 
         /* ── Forzar ancho 100% en todos los wrappers internos ───────── */
-        /* Estos son los selectores del DOM interno de df-messenger v1   */
         '.df-messenger-wrapper,',
         '.chat-wrapper,',
         '.chat-window,',
@@ -214,6 +208,11 @@
         '  left:       0        !important;',
         '  right:      0        !important;',
         '  bottom:     auto     !important;',
+        '}',
+
+        /* ── Respetar saltos de línea en burbujas ────────────────────── */
+        '.message, div.message, .text-message, df-message, [part="message"] {',
+        '  white-space: pre-wrap !important;',
         '}',
 
         /* ── Titlebar violeta ────────────────────────────────────────── */
@@ -275,21 +274,18 @@
       try { root.appendChild(el); } catch (e) {}
     }
 
-    /* ── Perforar los niveles del Shadow DOM ───────────────────── */
+    /* ── Perforar los niveles del Shadow DOM para inyectar CSS ───── */
     function aplicarEstilos() {
       var df = document.querySelector('df-messenger');
       if (!df) return;
 
-      /* N1: df-messenger */
       inyectar(df.shadowRoot, 'mecha-n1');
       if (!df.shadowRoot) return;
 
-      /* N2: df-messenger-chat */
       var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
       if (dfChat) {
         inyectar(dfChat.shadowRoot, 'mecha-n2');
 
-        /* Forzar estilos inline en el elemento df-messenger-chat */
         try {
           dfChat.style.setProperty('width',    '100%', 'important');
           dfChat.style.setProperty('height',   '100%', 'important');
@@ -298,7 +294,6 @@
 
         if (!dfChat.shadowRoot) return;
 
-        /* N3: df-messenger-titlebar */
         var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
         if (dfTitle) {
           inyectar(dfTitle.shadowRoot, 'mecha-n3');
@@ -308,7 +303,6 @@
           } catch (e) {}
         }
         
-        /* Asegurar ancho total para input de texto */
         var dfInput = dfChat.shadowRoot.querySelector('df-messenger-user-input');
         if (dfInput) {
           inyectar(dfInput.shadowRoot, 'mecha-n4');
@@ -333,7 +327,6 @@
         'button[class*="widget"]'
       ];
 
-      /* Buscar en el documento, en el elemento y en su shadow root */
       [document, df, df.shadowRoot].forEach(function (root) {
         if (!root || !root.querySelectorAll) return;
         sels.forEach(function (sel) {
@@ -350,10 +343,90 @@
     }
 
     /* ══════════════════════════════════════════════════════════════════
+       CONVERSIÓN DE ENLACES (TEXTO A HTML)
+       Recorre de forma segura los nodos de texto en el Shadow DOM para
+       convertir URLs en etiquetas <a>, evitando usar innerHTML en el
+       contenedor para no destruir eventos del componente.
+    ══════════════════════════════════════════════════════════════════ */
+    function convertirEnlacesEnNodo(root) {
+      if (!root) return;
+      
+      // Buscar todos los elementos en este nivel de Shadow DOM
+      var elements = root.querySelectorAll('*');
+      
+      // 1. Si tienen su propio shadowRoot, procesarlos recursivamente
+      elements.forEach(function(el) {
+        if (el.shadowRoot) {
+          convertirEnlacesEnNodo(el.shadowRoot);
+        }
+      });
+      
+      // 2. Procesar los elementos del nivel actual
+      elements.forEach(function(el) {
+        // Ignorar si ya fue procesado o si es una etiqueta que no debemos tocar
+        if (el.hasAttribute('data-enlaces-procesados')) return;
+        
+        var tag = el.tagName.toLowerCase();
+        if (tag === 'style' || tag === 'script' || tag === 'df-messenger' || tag === 'a') return;
+        
+        var fueModificado = false;
+        
+        // Iteramos sobre los hijos del elemento (usamos array para que no mute durante el loop)
+        var childNodes = Array.prototype.slice.call(el.childNodes);
+        
+        for (var i = 0; i < childNodes.length; i++) {
+          var child = childNodes[i];
+          
+          // Solo manipulamos Nodos de Texto puros
+          if (child.nodeType === Node.TEXT_NODE) {
+            var text = child.nodeValue;
+            var urlRegex = /(https?:\/\/[^\s]+)/g;
+            
+            if (urlRegex.test(text)) {
+              fueModificado = true;
+              var parts = text.split(urlRegex);
+              var fragment = document.createDocumentFragment();
+              
+              for (var j = 0; j < parts.length; j++) {
+                var part = parts[j];
+                if (part.match(/^https?:\/\//)) {
+                  var a = document.createElement('a');
+                  a.href = part;
+                  a.target = '_blank';
+                  a.style.color = V.violeta;
+                  a.style.textDecoration = 'underline';
+                  a.style.fontWeight = 'bold';
+                  a.textContent = part;
+                  fragment.appendChild(a);
+                } else if (part) {
+                  fragment.appendChild(document.createTextNode(part));
+                }
+              }
+              // Reemplazamos únicamente el nodo de texto viejo por el nuevo fragmento
+              el.replaceChild(fragment, child);
+            }
+          }
+        }
+        
+        // Marcamos el elemento para evitar bucles infinitos en el MutationObserver
+        if (fueModificado) {
+          el.setAttribute('data-enlaces-procesados', 'true');
+        }
+      });
+    }
+
+    function procesarEnlaces() {
+      var df = document.querySelector('df-messenger');
+      if (df && df.shadowRoot) {
+        convertirEnlacesEnNodo(df.shadowRoot);
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
        MUTATIONOBSERVER
-       El launcher puede ser insertado al DOM DESPUÉS de nuestra carga.
-       Este observer lo intercepta y oculta en tiempo real, sin importar
-       cuándo lo agregue Dialogflow.
+       El launcher y los mensajes pueden ser insertados dinámicamente.
+       Este observer los intercepta y oculta en tiempo real, sin importar
+       cuándo los agregue Dialogflow.
     ══════════════════════════════════════════════════════════════════ */
     function iniciarObserver() {
       var observer = new MutationObserver(function (mutations) {
@@ -363,15 +436,17 @@
         if (hayNuevos) {
           ocultarLauncher();
           aplicarEstilos();
+          procesarEnlaces(); // Invocamos el parseo seguro de URLs
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    /* ── Evento oficial de carga del componente ──────────────────── */
+    /* ── Eventos oficiales de inicialización ─────────────────────────── */
     window.addEventListener('dfMessengerLoaded', function () {
       aplicarEstilos();
       ocultarLauncher();
+      procesarEnlaces();
     });
 
     /* ── Fallbacks escalonados (por si dfMessengerLoaded no dispara) ─ */
@@ -379,6 +454,7 @@
       setTimeout(function () {
         aplicarEstilos();
         ocultarLauncher();
+        procesarEnlaces();
       }, ms);
     });
 
