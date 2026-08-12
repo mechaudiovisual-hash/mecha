@@ -27,13 +27,13 @@
 
     /* ─── Contenedor principal rígido ───────────────────────────────────
        Alto fijo explícito: impide que Dialogflow recalcule y colapse la
-       caja a cero. En desktop: 680px. En móvil: 100dvh (pantalla completa).
+       caja a cero. En desktop: 720px. En móvil: 100dvh (pantalla completa).
        flex + column: cabecera arriba, lista en el medio, footer abajo.
        overflow hidden: nada sale del recuadro.
     ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
       width:          100%   !important;
-      height:         680px  !important;   /* altura fija real — desktop  */
+      height:         720px  !important;   /* altura fija real — desktop  */
       max-width:      none   !important;
       position:       relative;
       border-radius:  16px;
@@ -314,12 +314,6 @@
       var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
       if (dfChat) {
         inyectar(dfChat.shadowRoot, 'mecha-n2');
-
-        try {
-          dfChat.style.setProperty('width',    '100%', 'important');
-          dfChat.style.setProperty('height',   '100%', 'important');
-          dfChat.style.setProperty('max-width','none',  'important');
-        } catch (e) {}
 
         if (!dfChat.shadowRoot) return;
 
