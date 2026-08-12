@@ -25,23 +25,25 @@
       overflow: hidden;
     }
 
-    /* ─── Contenedor HORIZONTAL ──────────────────────────────────────
-       Desktop: ancho 100% (se estira a los costados) y altura 600px
+    /* ─── Contenedor principal rígido ───────────────────────────────────
+       100dvh = llena exactamente la pantalla visible sin barras de scroll.
+       flex + column: cabecera arriba, lista en el medio, footer abajo.
+       overflow hidden: nada sale del recuadro.
     ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
-      width: 100% !important;
-      height: 600px !important;
-      max-width: none !important;
-      position: relative;
-      border-radius: 16px;
-      overflow: hidden;
+      width:          100%   !important;
+      height:         100dvh !important;   /* pantalla completa en desktop */
+      max-width:      none   !important;
+      position:       relative;
+      border-radius:  16px;
+      overflow:       hidden  !important;  /* bloquea scroll externo       */
       box-shadow:
         0 8px 32px rgba(142, 68, 173, 0.25),
         0 2px 8px  rgba(142, 68, 173, 0.10);
-        
-      /* Ajuste solicitado para evitar que la barra de escritura se desplace o desaparezca */
-      display: flex !important;
-      flex-direction: column !important;
+
+      /* Estructura columnar: cabecera + lista + footer */
+      display:        flex            !important;
+      flex-direction: column         !important;
     }
 
     /* ─── Web Component: ocupa todo el contenedor ───────────────────── */
@@ -140,8 +142,8 @@
 
     @media (max-width: 768px) {
       .caja-mecha-premium {
-        width: 100% !important;
-        height: 500px !important;
+        width:         100%   !important;
+        height:        100dvh !important;
         border-radius: 12px;
       }
     }
@@ -149,16 +151,17 @@
     @media (max-width: 480px) {
       html, body { align-items: stretch; }
       .caja-mecha-premium {
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+        width:         100%   !important;
+        height:        100dvh !important;
         border-radius: 0;
-        box-shadow: none;
+        box-shadow:    none;
       }
     }
 
     @media (max-width: 360px) {
-      .caja-mecha-premium { height: 100% !important; }
+      .caja-mecha-premium {
+        height: 100dvh !important;
+      }
     }
   </style>
 </head>
@@ -495,7 +498,7 @@
     /* CSS con selector universal — se aplica a TODO dentro del shadow root,
        incluyendo elementos creados dinámicamente por Dialogflow */
     var CSS_LINEBREAKS = [
-      /* ── Selector universal: cubre cualquier nodo de texto dinámico ── */
+      /* ── Selector universal: word-break en TODO el shadow root ──────── */
       '* {',
       '  word-break: break-word !important;',
       '}',
@@ -513,21 +516,32 @@
       '  line-height: 1.5      !important;',
       '}',
 
-      /* ── Lista de mensajes: scroll independiente ─────────────────── */
+      /* ── Cabecera (titlebar): inamovible, no se comprime ─────────── */
+      'df-messenger-titlebar,',
+      '[part="titlebar"],',
+      '.df-messenger-titlebar,',
+      '.title-wrapper,',
+      '.header {',
+      '  flex-shrink: 0 !important;',
+      '  min-height:   44px !important;',
+      '}',
+
+      /* ── Lista de mensajes: ocupa el espacio sobrante, scroll propio ─ */
       '#messageList,',
       'df-message-list,',
       '.message-list, .chat-body,',
       '.messages-container {',
-      '  flex:       1 1 auto !important;',
-      '  overflow-y: auto     !important;',
-      '  min-height: 0        !important;',
+      '  flex:         1 1 auto !important;',  /* se expande y contrae    */
+      '  overflow-y:   auto     !important;',  /* scroll SOLO aquí        */
+      '  overflow-x:   hidden   !important;',
+      '  min-height:   0        !important;',  /* evita desbordamiento    */
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
       'df-messenger-user-input,',
       '.input-area,',
       '.user-input-container {',
-      '  flex-shrink: 0    !important;',
+      '  flex-shrink: 0    !important;',  /* nunca se comprime       */
       '  min-height:  50px !important;',
       '  width:       100% !important;',
       '}'
