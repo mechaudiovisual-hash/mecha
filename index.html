@@ -477,6 +477,67 @@
 
     /* ── Iniciar observer inmediatamente ─────────────────────────── */
     iniciarObserver();
+
+    /* ══════════════════════════════════════════════════════════════════
+       INYECCIÓN FOCALIZADA: SALTOS DE LÍNEA + PROTECCIÓN DEL FOOTER
+       Se ejecuta exclusivamente dentro del shadowRoot de df-messenger-chat
+       al dispararse dfMessengerLoaded. No altera el DOM principal ni
+       ninguna otra lógica existente.
+    ══════════════════════════════════════════════════════════════════ */
+    window.addEventListener('dfMessengerLoaded', function () {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+
+      /* Perforar hasta el segundo nivel: df-messenger > df-messenger-chat */
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
+
+      /* Evitar inyección duplicada */
+      if (dfChat.shadowRoot.querySelector('#mecha-linebreaks')) return;
+
+      var estiloFocal = document.createElement('style');
+      estiloFocal.id = 'mecha-linebreaks';
+      estiloFocal.textContent = [
+
+        /* ── 1. Saltos de línea y formato de texto ──────────────────── */
+        '.message-text,',
+        'df-message-bubble,',
+        '.df-message-bubble-content,',
+        '.message,',
+        'div.message,',
+        '.text-message,',
+        'df-message,',
+        '[part="message"],',
+        '.bot-message p,',
+        '.response-text {',
+        '  white-space: pre-wrap  !important;',
+        '  word-break:  break-word !important;',
+        '  line-height: 1.5        !important;',
+        '}',
+
+        /* ── 2. Lista de mensajes: scroll independiente ─────────────── */
+        '#messageList,',
+        '.message-list,',
+        '.chat-body,',
+        '.messages-container {',
+        '  flex:       1 1 auto !important;',
+        '  overflow-y: auto     !important;',
+        '  min-height: 0        !important;',
+        '}',
+
+        /* ── 3. Footer / barra de entrada: anclada al fondo ─────────── */
+        'df-messenger-user-input,',
+        '.input-area,',
+        '.user-input-container {',
+        '  flex-shrink: 0         !important;',
+        '  min-height:  50px      !important;',
+        '  width:       100%      !important;',
+        '}'
+
+      ].join('\n');
+
+      dfChat.shadowRoot.appendChild(estiloFocal);
+    });
   </script>
 
 </body>
