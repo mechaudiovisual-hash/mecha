@@ -38,6 +38,10 @@
       box-shadow:
         0 8px 32px rgba(142, 68, 173, 0.25),
         0 2px 8px  rgba(142, 68, 173, 0.10);
+        
+      /* Ajuste solicitado para evitar que la barra de escritura se desplace o desaparezca */
+      display: flex !important;
+      flex-direction: column !important;
     }
 
     /* ─── Web Component: ocupa todo el contenedor ───────────────────── */
@@ -115,6 +119,19 @@
     df-messenger-chat {
       width: 100% !important;
       height: 100% !important;
+    }
+    
+    /* ─── Saltos de línea para el texto (Ajuste sin tocar JS) ────────── */
+    df-messenger >>> .message, 
+    df-messenger >>> div.message, 
+    df-messenger >>> .text-message, 
+    df-messenger >>> df-message, 
+    df-messenger::part(message),
+    df-messenger >>> .message-text,
+    df-messenger >>> df-message-bubble,
+    df-messenger >>> .df-message-bubble-content {
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
     }
 
     /* ══════════════════════════════════════════════════════════════════
@@ -464,4 +481,3 @@
 
 </body>
 </html>
- 
