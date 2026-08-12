@@ -26,13 +26,14 @@
     }
 
     /* ─── Contenedor principal rígido ───────────────────────────────────
-       100dvh = llena exactamente la pantalla visible sin barras de scroll.
+       Alto fijo explícito: impide que Dialogflow recalcule y colapse la
+       caja a cero. En desktop: 650px. En móvil: 100dvh (pantalla completa).
        flex + column: cabecera arriba, lista en el medio, footer abajo.
        overflow hidden: nada sale del recuadro.
     ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
       width:          100%   !important;
-      height:         100dvh !important;   /* pantalla completa en desktop */
+      height:         650px  !important;   /* altura fija real — desktop  */
       max-width:      none   !important;
       position:       relative;
       border-radius:  16px;
@@ -41,7 +42,7 @@
         0 8px 32px rgba(142, 68, 173, 0.25),
         0 2px 8px  rgba(142, 68, 173, 0.10);
 
-      /* Estructura columnar: cabecera + lista + footer */
+      /* Estructura columnar: cabecera fija + lista scrollable + footer fijo */
       display:        flex            !important;
       flex-direction: column         !important;
     }
@@ -140,24 +141,27 @@
        MEDIA QUERIES — RESPONSIVE
     ══════════════════════════════════════════════════════════════════ */
 
+    /* ── Tablet (768px) : altura fija proporcional ───────────────────── */
     @media (max-width: 768px) {
       .caja-mecha-premium {
         width:         100%   !important;
-        height:        100dvh !important;
+        height:        550px  !important;   /* fijo — evita colapso        */
         border-radius: 12px;
       }
     }
 
+    /* ── Móvil (480px) : pantalla completa con dvh ──────────────────── */
     @media (max-width: 480px) {
       html, body { align-items: stretch; }
       .caja-mecha-premium {
         width:         100%   !important;
-        height:        100dvh !important;
+        height:        100dvh !important;   /* pantalla completa en móvil  */
         border-radius: 0;
         box-shadow:    none;
       }
     }
 
+    /* ── Móvil pequeño (360px) ─────────────────────────────────── */
     @media (max-width: 360px) {
       .caja-mecha-premium {
         height: 100dvh !important;
@@ -531,10 +535,11 @@
       'df-message-list,',
       '.message-list, .chat-body,',
       '.messages-container {',
-      '  flex:         1 1 auto !important;',  /* se expande y contrae    */
-      '  overflow-y:   auto     !important;',  /* scroll SOLO aquí        */
+      '  flex:         1 1 auto !important;',  /* se expande y contrae        */
+      '  overflow-y:   auto     !important;',  /* scroll SOLO aquí           */
       '  overflow-x:   hidden   !important;',
-      '  min-height:   0        !important;',  /* evita desbordamiento    */
+      '  min-height:   0        !important;',  /* evita desbordamiento        */
+      '  max-height:   100%     !important;',  /* bloquea reajuste dinámico  */
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
