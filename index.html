@@ -27,13 +27,13 @@
 
     /* ─── Contenedor principal rígido ───────────────────────────────────
        Alto fijo explícito: impide que Dialogflow recalcule y colapse la
-       caja a cero. En desktop: 650px. En móvil: 100dvh (pantalla completa).
+       caja a cero. En desktop: 680px. En móvil: 100dvh (pantalla completa).
        flex + column: cabecera arriba, lista en el medio, footer abajo.
        overflow hidden: nada sale del recuadro.
     ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
       width:          100%   !important;
-      height:         650px  !important;   /* altura fija real — desktop  */
+      height:         680px  !important;   /* altura fija real — desktop  */
       max-width:      none   !important;
       position:       relative;
       border-radius:  16px;
@@ -53,6 +53,11 @@
       inset: 0           !important;
       width:  100%       !important;
       height: 100%       !important;
+
+      /* Forzar también la estructura de columna internamente */
+      display:        flex   !important;
+      flex-direction: column !important;
+      overflow:       hidden !important;
 
       /* Dimensiones internas del panel del chat */
       --df-messenger-chat-window-width:  100% !important;
@@ -527,6 +532,7 @@
       '.title-wrapper,',
       '.header {',
       '  flex-shrink: 0 !important;',
+      '  height:       auto !important;',
       '  min-height:   44px !important;',
       '}',
 
@@ -547,6 +553,7 @@
       '.input-area,',
       '.user-input-container {',
       '  flex-shrink: 0    !important;',  /* nunca se comprime       */
+      '  height:      auto !important;',
       '  min-height:  50px !important;',
       '  width:       100% !important;',
       '}'
