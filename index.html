@@ -464,6 +464,7 @@
       aplicarEstilos();
       ocultarLauncher();
       procesarEnlaces();
+      inyectarEnTodosLosNiveles();
     });
 
     /* ── Fallbacks escalonados (por si dfMessengerLoaded no dispara) ─ */
@@ -472,72 +473,112 @@
         aplicarEstilos();
         ocultarLauncher();
         procesarEnlaces();
+        inyectarEnTodosLosNiveles();
       }, ms);
     });
 
     /* ── Iniciar observer inmediatamente ─────────────────────────── */
     iniciarObserver();
 
+    /* ── Re-inyectar en burbujas nuevas desde el MutationObserver ─────── */
+    /* El observer ya está activo; esta llamada cubre el arranque inicial. */
+    inyectarEnTodosLosNiveles();
+
     /* ══════════════════════════════════════════════════════════════════
-       INYECCIÓN FOCALIZADA: SALTOS DE LÍNEA + PROTECCIÓN DEL FOOTER
-       Se ejecuta exclusivamente dentro del shadowRoot de df-messenger-chat
-       al dispararse dfMessengerLoaded. No altera el DOM principal ni
-       ninguna otra lógica existente.
+       INYECCIÓN PROFUNDA: SALTOS DE LÍNEA + PROTECCIÓN DEL FOOTER
+       Estrategia de tres capas:
+         1. Selector universal * en df-messenger-chat (cubre dinámicos)
+         2. Perforación recursiva hasta df-message-list y df-message-bubble
+         3. MutationObserver re-inyecta en cada burbuja nueva
     ══════════════════════════════════════════════════════════════════ */
-    window.addEventListener('dfMessengerLoaded', function () {
+
+    /* CSS con selector universal — se aplica a TODO dentro del shadow root,
+       incluyendo elementos creados dinámicamente por Dialogflow */
+    var CSS_LINEBREAKS = [
+      /* ── Selector universal: cubre cualquier nodo de texto dinámico ── */
+      '* {',
+      '  word-break: break-word !important;',
+      '}',
+
+      /* ── Selectores específicos para burbujas y texto ────────────── */
+      '.message-text,',
+      'df-message-bubble,',
+      '.df-message-bubble-content,',
+      '.message, div.message,',
+      '.text-message, df-message,',
+      '[part="message"],',
+      '.bot-message, .bot-message p,',
+      '.response-text, span, p {',
+      '  white-space: pre-wrap !important;',
+      '  line-height: 1.5      !important;',
+      '}',
+
+      /* ── Lista de mensajes: scroll independiente ─────────────────── */
+      '#messageList,',
+      'df-message-list,',
+      '.message-list, .chat-body,',
+      '.messages-container {',
+      '  flex:       1 1 auto !important;',
+      '  overflow-y: auto     !important;',
+      '  min-height: 0        !important;',
+      '}',
+
+      /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
+      'df-messenger-user-input,',
+      '.input-area,',
+      '.user-input-container {',
+      '  flex-shrink: 0    !important;',
+      '  min-height:  50px !important;',
+      '  width:       100% !important;',
+      '}'
+    ].join('\n');
+
+    /* ── Inyecta el CSS en un Shadow Root usando un ID para no duplicar ─ */
+    function inyectarLinebreaks(shadowRoot, id) {
+      if (!shadowRoot) return;
+      if (shadowRoot.querySelector && shadowRoot.querySelector('#' + id)) return;
+      var s = document.createElement('style');
+      s.id = id;
+      s.textContent = CSS_LINEBREAKS;
+      try { shadowRoot.appendChild(s); } catch (e) {}
+    }
+
+    /* ── Perfora recursivamente todos los shadow roots conocidos ──────── */
+    function inyectarEnTodosLosNiveles() {
       var df = document.querySelector('df-messenger');
       if (!df || !df.shadowRoot) return;
 
-      /* Perforar hasta el segundo nivel: df-messenger > df-messenger-chat */
+      /* N1 — df-messenger */
+      inyectarLinebreaks(df.shadowRoot, 'lb-n1');
+
+      /* N2 — df-messenger-chat */
       var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
       if (!dfChat || !dfChat.shadowRoot) return;
+      inyectarLinebreaks(dfChat.shadowRoot, 'lb-n2');
 
-      /* Evitar inyección duplicada */
-      if (dfChat.shadowRoot.querySelector('#mecha-linebreaks')) return;
+      /* N2b — df-message-list (hermano dentro de df-messenger-chat) */
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (dfMsgList && dfMsgList.shadowRoot) {
+        inyectarLinebreaks(dfMsgList.shadowRoot, 'lb-msglist');
 
-      var estiloFocal = document.createElement('style');
-      estiloFocal.id = 'mecha-linebreaks';
-      estiloFocal.textContent = [
+        /* N3 — df-message-bubble: una por cada respuesta del bot */
+        dfMsgList.shadowRoot.querySelectorAll('df-message-bubble').forEach(function (bubble, i) {
+          if (bubble.shadowRoot) {
+            inyectarLinebreaks(bubble.shadowRoot, 'lb-bubble-' + i);
+          }
+        });
+      }
 
-        /* ── 1. Saltos de línea y formato de texto ──────────────────── */
-        '.message-text,',
-        'df-message-bubble,',
-        '.df-message-bubble-content,',
-        '.message,',
-        'div.message,',
-        '.text-message,',
-        'df-message,',
-        '[part="message"],',
-        '.bot-message p,',
-        '.response-text {',
-        '  white-space: pre-wrap  !important;',
-        '  word-break:  break-word !important;',
-        '  line-height: 1.5        !important;',
-        '}',
+      /* N3 — df-messenger-titlebar */
+      var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
+      if (dfTitle && dfTitle.shadowRoot) {
+        inyectarLinebreaks(dfTitle.shadowRoot, 'lb-title');
+      }
+    }
 
-        /* ── 2. Lista de mensajes: scroll independiente ─────────────── */
-        '#messageList,',
-        '.message-list,',
-        '.chat-body,',
-        '.messages-container {',
-        '  flex:       1 1 auto !important;',
-        '  overflow-y: auto     !important;',
-        '  min-height: 0        !important;',
-        '}',
-
-        /* ── 3. Footer / barra de entrada: anclada al fondo ─────────── */
-        'df-messenger-user-input,',
-        '.input-area,',
-        '.user-input-container {',
-        '  flex-shrink: 0         !important;',
-        '  min-height:  50px      !important;',
-        '  width:       100%      !important;',
-        '}'
-
-      ].join('\n');
-
-      dfChat.shadowRoot.appendChild(estiloFocal);
-    });
+    /* inyectarEnTodosLosNiveles() ya se llama desde dfMessengerLoaded,
+       los fallbacks y el arranque inicial. El MutationObserver la
+       re-ejecuta automáticamente a través de aplicarEstilos(). */
   </script>
 
 </body>
