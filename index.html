@@ -25,26 +25,27 @@
       overflow: hidden;
     }
 
-    /* ─── Contenedor principal rígido ───────────────────────────────────
-       Alto fijo explícito: impide que Dialogflow recalcule y colapse la
-       caja a cero. En desktop: 720px. En móvil: 100dvh (pantalla completa).
+    /* ─── Marco Global en Pantalla Completa (Full Viewport) ─────────────
+       Ocupa el 100% de la ventana de forma absoluta y fija.
        flex + column: cabecera arriba, lista en el medio, footer abajo.
-       overflow hidden: nada sale del recuadro.
     ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
-      width:          100%   !important;
-      height:         720px  !important;   /* altura fija real — desktop  */
+      position:       fixed  !important;
+      top:            0      !important;
+      left:           0      !important;
+      width:          100vw  !important;
+      height:         100vh  !important;
+      margin:         0      !important;
+      padding:        0      !important;
       max-width:      none   !important;
-      position:       relative;
-      border-radius:  16px;
-      overflow:       hidden  !important;  /* bloquea scroll externo       */
-      box-shadow:
-        0 8px 32px rgba(142, 68, 173, 0.25),
-        0 2px 8px  rgba(142, 68, 173, 0.10);
+      border-radius:  0      !important;
+      overflow:       hidden !important;
+      z-index:        9999   !important;
+      box-shadow:     none   !important;
 
       /* Estructura columnar: cabecera fija + lista scrollable + footer fijo */
       display:        flex            !important;
-      flex-direction: column         !important;
+      flex-direction: column          !important;
     }
 
     /* ─── Web Component: ocupa todo el contenedor ───────────────────── */
@@ -142,34 +143,11 @@
       word-break: break-word !important;
     }
 
-    /* ══════════════════════════════════════════════════════════════════
-       MEDIA QUERIES — RESPONSIVE
-    ══════════════════════════════════════════════════════════════════ */
+    /* ─── MEDIA QUERIES (Opcional, ya que es Full Screen por defecto) ── */
 
-    /* ── Tablet (768px) : altura fija proporcional ───────────────────── */
-    @media (max-width: 768px) {
-      .caja-mecha-premium {
-        width:         100%   !important;
-        height:        550px  !important;   /* fijo — evita colapso        */
-        border-radius: 12px;
-      }
-    }
-
-    /* ── Móvil (480px) : pantalla completa con dvh ──────────────────── */
     @media (max-width: 480px) {
-      html, body { align-items: stretch; }
       .caja-mecha-premium {
-        width:         100%   !important;
-        height:        100dvh !important;   /* pantalla completa en móvil  */
-        border-radius: 0;
-        box-shadow:    none;
-      }
-    }
-
-    /* ── Móvil pequeño (360px) ─────────────────────────────────── */
-    @media (max-width: 360px) {
-      .caja-mecha-premium {
-        height: 100dvh !important;
+        height: 100dvh !important; /* Ajuste para barras móviles */
       }
     }
   </style>
@@ -416,9 +394,17 @@
                   var a = document.createElement('a');
                   a.href = part;
                   a.target = '_blank';
-                  a.style.color = V.violeta;
+                  a.rel = 'noopener noreferrer'; /* Seguridad al abrir externa */
+                  
+                  /* Asegurar interactividad y clics */
+                  a.style.pointerEvents = 'auto';
+                  a.style.cursor = 'pointer';
+                  
+                  /* Estilos visuales del enlace (azul, subrayado, negrita) */
+                  a.style.color = '#0066cc'; 
                   a.style.textDecoration = 'underline';
                   a.style.fontWeight = 'bold';
+                  
                   a.textContent = part;
                   fragment.appendChild(a);
                 } else if (part) {
@@ -535,20 +521,19 @@
       'df-message-list,',
       '.message-list, .chat-body,',
       '.messages-container {',
-      '  flex:         1 1 auto !important;',  /* se expande y contrae        */
-      '  overflow-y:   auto     !important;',  /* scroll SOLO aquí           */
-      '  overflow-x:   hidden   !important;',
-      '  min-height:   0        !important;',  /* evita desbordamiento        */
-      '  max-height:   100%     !important;',  /* bloquea reajuste dinámico  */
+      '  flex:         1 1 auto !important;',
+      '  overflow-y:   auto     !important;',
+      '  height:       100%     !important;',
+      '  max-height:   100%     !important;',
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
       'df-messenger-user-input,',
       '.input-area,',
       '.user-input-container {',
-      '  flex-shrink: 0    !important;',  /* nunca se comprime       */
+      '  flex-shrink: 0    !important;',
       '  height:      auto !important;',
-      '  min-height:  50px !important;',
+      '  min-height:  60px !important;',
       '  width:       100% !important;',
       '}'
     ].join('\n');
