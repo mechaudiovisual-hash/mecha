@@ -370,66 +370,56 @@
         var tag = el.tagName.toLowerCase();
         if (tag === 'style' || tag === 'script' || tag === 'df-messenger' || tag === 'a') return;
         
-        var fueModificado = false;
+    /* ══════════════════════════════════════════════════════════════════
+       CONVERSIÓN DE ENLACES (VÍA INNERHTML)
+       Escanea el Shadow DOM en busca de textos de mensaje y reemplaza 
+       las URLs por etiquetas <a> usando innerHTML para preservar los \n
+    ══════════════════════════════════════════════════════════════════ */
+    function procesarEnlacesConInnerHTML() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+      
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
+      
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (!dfMsgList || !dfMsgList.shadowRoot) return;
+      
+      var bubbles = dfMsgList.shadowRoot.querySelectorAll('df-message-bubble');
+      bubbles.forEach(function(bubble) {
+        if (!bubble.shadowRoot || bubble.hasAttribute('data-enlaces-procesados')) return;
         
-        // Iteramos sobre los hijos del elemento (usamos array para que no mute durante el loop)
-        var childNodes = Array.prototype.slice.call(el.childNodes);
+        var content = bubble.shadowRoot.querySelector('.df-message-bubble-content') || bubble.shadowRoot.querySelector('.message-text');
         
-        for (var i = 0; i < childNodes.length; i++) {
-          var child = childNodes[i];
+        if (content && content.innerHTML) {
+          var htmlOriginal = content.innerHTML;
           
-          // Solo manipulamos Nodos de Texto puros
-          if (child.nodeType === Node.TEXT_NODE) {
-            var text = child.nodeValue;
-            var urlRegex = /(https?:\/\/[^\s]+)/g;
+          /* Evitar procesar si ya contiene un enlace HTML para no romperlo */
+          if (htmlOriginal.indexOf('<a ') === -1 && htmlOriginal.match(/https?:\/\//)) {
+            var urlRegex = /(https?:\/\/[^\s<]+)/g;
             
-            if (urlRegex.test(text)) {
-              fueModificado = true;
-              var parts = text.split(urlRegex);
-              var fragment = document.createDocumentFragment();
-              
-              for (var j = 0; j < parts.length; j++) {
-                var part = parts[j];
-                if (part.match(/^https?:\/\//)) {
-                  var a = document.createElement('a');
-                  a.href = part;
-                  a.target = '_blank';
-                  a.rel = 'noopener noreferrer'; /* Seguridad al abrir externa */
-                  
-                  /* Asegurar interactividad y clics */
-                  a.style.pointerEvents = 'auto';
-                  a.style.cursor = 'pointer';
-                  
-                  /* Estilos visuales del enlace (azul, subrayado, negrita) */
-                  a.style.color = '#0066cc'; 
-                  a.style.textDecoration = 'underline';
-                  a.style.fontWeight = 'bold';
-                  
-                  a.textContent = part;
-                  fragment.appendChild(a);
-                } else if (part) {
-                  fragment.appendChild(document.createTextNode(part));
-                }
-              }
-              // Reemplazamos únicamente el nodo de texto viejo por el nuevo fragmento
-              el.replaceChild(fragment, child);
-            }
+            /* Reemplazo por regex preservando saltos de línea y estructura */
+            var nuevoHtml = htmlOriginal.replace(urlRegex, function(url) {
+              return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="pointer-events: auto !important; cursor: pointer !important; color: #0066cc !important; text-decoration: underline !important; font-weight: bold !important;">' + url + '</a>';
+            });
+            
+            content.innerHTML = nuevoHtml;
           }
-        }
-        
-        // Marcamos el elemento para evitar bucles infinitos en el MutationObserver
-        if (fueModificado) {
-          el.setAttribute('data-enlaces-procesados', 'true');
+          
+          /* Marcar como procesado independientemente para no iterarlo en loop */
+          bubble.setAttribute('data-enlaces-procesados', 'true');
         }
       });
     }
 
-    function procesarEnlaces() {
-      var df = document.querySelector('df-messenger');
-      if (df && df.shadowRoot) {
-        convertirEnlacesEnNodo(df.shadowRoot);
-      }
-    }
+    /* ── Intercepción directa del evento de respuesta de Dialogflow ── */
+    window.addEventListener('df-response-received', function() {
+      /* Le damos un brevísimo delay para asegurar que el componente
+         haya terminado de renderizar la burbuja en el DOM */
+      setTimeout(function() {
+        procesarEnlacesConInnerHTML();
+      }, 50);
+    });
 
     /* ══════════════════════════════════════════════════════════════════
        MUTATIONOBSERVER
@@ -445,7 +435,7 @@
         if (hayNuevos) {
           ocultarLauncher();
           aplicarEstilos();
-          procesarEnlaces(); // Invocamos el parseo seguro de URLs
+          procesarEnlacesConInnerHTML();
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
@@ -455,7 +445,7 @@
     window.addEventListener('dfMessengerLoaded', function () {
       aplicarEstilos();
       ocultarLauncher();
-      procesarEnlaces();
+      procesarEnlacesConInnerHTML();
       inyectarEnTodosLosNiveles();
     });
 
@@ -464,7 +454,7 @@
       setTimeout(function () {
         aplicarEstilos();
         ocultarLauncher();
-        procesarEnlaces();
+        procesarEnlacesConInnerHTML();
         inyectarEnTodosLosNiveles();
       }, ms);
     });
