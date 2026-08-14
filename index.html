@@ -346,70 +346,78 @@
 
 
     /* ══════════════════════════════════════════════════════════════════
-       OPCIÓN A: LINKIFICACIÓN CERO MUTACIÓN (PRECISIÓN CARET)
-       Usa caretRangeFromPoint para leer exactamente la palabra bajo
-       el puntero del mouse, sin tocar el HTML ni alterar el CSS global.
+       ENVOLTORIO QUIRÚRGICO DE URLS (SPAN NATIVO)
+       Divide los Nodos de Texto puros para envolver solo la URL en 
+       una etiqueta <span> con estilos y eventos, sin tocar innerHTML.
     ══════════════════════════════════════════════════════════════════ */
-    
-    function obtenerPalabraBajoPuntero(x, y) {
-      var range;
-      if (document.caretRangeFromPoint) {
-        range = document.caretRangeFromPoint(x, y);
-      } else if (document.caretPositionFromPoint) {
-        var pos = document.caretPositionFromPoint(x, y);
-        if (pos) {
-          range = document.createRange();
-          range.setStart(pos.offsetNode, pos.offset);
-          range.collapse(true);
+    function procesarNodosDeTextoConSpan(elemento) {
+      var root = elemento.shadowRoot || elemento;
+      var childNodes = Array.prototype.slice.call(root.childNodes);
+      
+      for (var i = 0; i < childNodes.length; i++) {
+        var child = childNodes[i];
+        
+        if (child.nodeType === Node.TEXT_NODE) {
+          var text = child.nodeValue;
+          var urlRegex = /(https?:\/\/[^\s]+)/g;
+          
+          if (urlRegex.test(text)) {
+            var parts = text.split(urlRegex);
+            var fragment = document.createDocumentFragment();
+            
+            for (var j = 0; j < parts.length; j++) {
+              var part = parts[j];
+              if (part.match(/^https?:\/\//)) {
+                var span = document.createElement('span');
+                span.className = 'mecha-url';
+                span.style.cssText = 'color: #0066cc !important; cursor: pointer !important; text-decoration: underline !important; pointer-events: auto !important;';
+                span.textContent = part;
+                
+                /* Closure para aislar la URL correcta en el listener */
+                (function(url) {
+                  span.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    window.open(url, '_blank');
+                  });
+                })(part);
+                
+                fragment.appendChild(span);
+              } else if (part) {
+                fragment.appendChild(document.createTextNode(part));
+              }
+            }
+            child.parentNode.replaceChild(fragment, child);
+          }
+        } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() !== 'span' && child.tagName.toLowerCase() !== 'a') {
+          procesarNodosDeTextoConSpan(child);
         }
       }
-      if (!range || range.startContainer.nodeType !== Node.TEXT_NODE) return null;
-
-      var text = range.startContainer.nodeValue;
-      var offset = range.startOffset;
-
-      var start = offset;
-      while (start > 0 && !/\s/.test(text[start - 1])) start--;
-      var end = offset;
-      while (end < text.length && !/\s/.test(text[end])) end++;
-
-      return text.substring(start, end).trim();
     }
 
-    /* 1. CLIC: Abrir solo si la palabra exacta es una URL */
-    document.addEventListener('click', function(e) {
-      if (e.button !== 0) return;
-      var word = obtenerPalabraBajoPuntero(e.clientX, e.clientY);
-      if (word && word.match(/^https?:\/\//)) {
-        window.open(word, '_blank');
-      }
-    }, true);
+    function iniciarObserverEnlacesSpan() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (!dfMsgList || !dfMsgList.shadowRoot) return;
 
-    /* 2. MOUSEMOVE: Manito inteligente en tiempo real */
-    var lastHoveredTarget = null;
-    document.addEventListener('mousemove', function(e) {
-      var target = e.composedPath ? e.composedPath()[0] : e.target;
-      
-      /* Limpiar el objetivo anterior si nos movimos de elemento */
-      if (lastHoveredTarget && lastHoveredTarget !== target) {
-        if (lastHoveredTarget.style) lastHoveredTarget.style.removeProperty('cursor');
-        lastHoveredTarget = null;
-      }
+      if (dfMsgList.getAttribute('data-observer-span') === 'true') return;
+      dfMsgList.setAttribute('data-observer-span', 'true');
 
-      var word = obtenerPalabraBajoPuntero(e.clientX, e.clientY);
-      
-      if (target && target.style) {
-        if (word && word.match(/^https?:\/\//)) {
-          target.style.setProperty('cursor', 'pointer', 'important');
-          lastHoveredTarget = target;
-        } else if (word) {
-          target.style.setProperty('cursor', 'text', 'important');
-          lastHoveredTarget = target;
-        } else {
-          target.style.removeProperty('cursor');
+      var observer = new MutationObserver(function(mutations) {
+        var hayNuevos = mutations.some(function(m) { return m.addedNodes.length > 0; });
+        if (hayNuevos) {
+          var bubbles = dfMsgList.shadowRoot.querySelectorAll('df-message-bubble, .message-text');
+          bubbles.forEach(function(bubble) {
+            if (bubble.hasAttribute('data-span-procesado')) return;
+            procesarNodosDeTextoConSpan(bubble);
+            bubble.setAttribute('data-span-procesado', 'true');
+          });
         }
-      }
-    }, true);
+      });
+      observer.observe(dfMsgList.shadowRoot, { childList: true, subtree: true });
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        MUTATIONOBSERVER GLOBAL (Launcher y Estilos)
@@ -434,6 +442,7 @@
       aplicarEstilos();
       ocultarLauncher();
       inyectarEnTodosLosNiveles();
+      iniciarObserverEnlacesSpan();
     });
 
     /* ── Fallbacks escalonados (por si dfMessengerLoaded no dispara) ─ */
@@ -442,6 +451,7 @@
         aplicarEstilos();
         ocultarLauncher();
         inyectarEnTodosLosNiveles();
+        iniciarObserverEnlacesSpan();
       }, ms);
     });
 
