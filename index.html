@@ -346,18 +346,13 @@
 
 
     /* ══════════════════════════════════════════════════════════════════
-       OPCIÓN A: LINKIFICACIÓN CERO MUTACIÓN (DELEGACIÓN DE CLICS)
-       Captura los clics globalmente, extrae la palabra exacta cliqueada
-       usando caretRangeFromPoint y la abre si es una URL.
+       OPCIÓN A: LINKIFICACIÓN CERO MUTACIÓN (PRECISIÓN CARET)
+       Usa caretRangeFromPoint para leer exactamente la palabra bajo
+       el puntero del mouse, sin tocar el HTML ni alterar el CSS global.
     ══════════════════════════════════════════════════════════════════ */
-    document.addEventListener('click', function(e) {
-      if (e.button !== 0) return; // Solo clic izquierdo
-
-      var x = e.clientX;
-      var y = e.clientY;
+    
+    function obtenerPalabraBajoPuntero(x, y) {
       var range;
-
-      /* Extraer el rango de texto en la posición del clic */
       if (document.caretRangeFromPoint) {
         range = document.caretRangeFromPoint(x, y);
       } else if (document.caretPositionFromPoint) {
@@ -368,32 +363,51 @@
           range.collapse(true);
         }
       }
+      if (!range || range.startContainer.nodeType !== Node.TEXT_NODE) return null;
 
-      if (!range) return;
-
-      var textNode = range.startContainer;
-      if (textNode.nodeType !== Node.TEXT_NODE) return;
-
-      var text = textNode.nodeValue;
+      var text = range.startContainer.nodeValue;
       var offset = range.startOffset;
 
-      /* Encontrar el inicio de la palabra */
       var start = offset;
-      while (start > 0 && !/\s/.test(text[start - 1])) {
-        start--;
-      }
-
-      /* Encontrar el fin de la palabra */
+      while (start > 0 && !/\s/.test(text[start - 1])) start--;
       var end = offset;
-      while (end < text.length && !/\s/.test(text[end])) {
-        end++;
+      while (end < text.length && !/\s/.test(text[end])) end++;
+
+      return text.substring(start, end).trim();
+    }
+
+    /* 1. CLIC: Abrir solo si la palabra exacta es una URL */
+    document.addEventListener('click', function(e) {
+      if (e.button !== 0) return;
+      var word = obtenerPalabraBajoPuntero(e.clientX, e.clientY);
+      if (word && word.match(/^https?:\/\//)) {
+        window.open(word, '_blank');
+      }
+    }, true);
+
+    /* 2. MOUSEMOVE: Manito inteligente en tiempo real */
+    var lastHoveredTarget = null;
+    document.addEventListener('mousemove', function(e) {
+      var target = e.composedPath ? e.composedPath()[0] : e.target;
+      
+      /* Limpiar el objetivo anterior si nos movimos de elemento */
+      if (lastHoveredTarget && lastHoveredTarget !== target) {
+        if (lastHoveredTarget.style) lastHoveredTarget.style.removeProperty('cursor');
+        lastHoveredTarget = null;
       }
 
-      var word = text.substring(start, end).trim();
-
-      /* Si la palabra cliqueada es una URL, abrirla */
-      if (word.match(/^https?:\/\//)) {
-        window.open(word, '_blank');
+      var word = obtenerPalabraBajoPuntero(e.clientX, e.clientY);
+      
+      if (target && target.style) {
+        if (word && word.match(/^https?:\/\//)) {
+          target.style.setProperty('cursor', 'pointer', 'important');
+          lastHoveredTarget = target;
+        } else if (word) {
+          target.style.setProperty('cursor', 'text', 'important');
+          lastHoveredTarget = target;
+        } else {
+          target.style.removeProperty('cursor');
+        }
       }
     }, true);
 
@@ -465,8 +479,6 @@
       '.response-text, span, p {',
       '  white-space: pre-wrap !important;',
       '  line-height: 1.5      !important;',
-      '  cursor:      pointer  !important;',
-      '  user-select: text     !important;',
       '}',
 
       /* ── Cabecera (titlebar): inamovible, no se comprime ─────────── */
