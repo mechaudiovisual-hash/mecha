@@ -343,83 +343,7 @@
       });
     }
 
-    /* ══════════════════════════════════════════════════════════════════
-       CONVERSIÓN DE ENLACES (TEXTO A HTML)
-       Recorre de forma segura los nodos de texto en el Shadow DOM para
-       convertir URLs en etiquetas <a>, evitando usar innerHTML en el
-       contenedor para no destruir eventos del componente.
-    ══════════════════════════════════════════════════════════════════ */
-    function convertirEnlacesEnNodo(root) {
-      if (!root) return;
-      
-      // Buscar todos los elementos en este nivel de Shadow DOM
-      var elements = root.querySelectorAll('*');
-      
-      // 1. Si tienen su propio shadowRoot, procesarlos recursivamente
-      elements.forEach(function(el) {
-        if (el.shadowRoot) {
-          convertirEnlacesEnNodo(el.shadowRoot);
-        }
-      });
-      
-      // 2. Procesar los elementos del nivel actual
-      elements.forEach(function(el) {
-        // Ignorar si ya fue procesado o si es una etiqueta que no debemos tocar
-        if (el.hasAttribute('data-enlaces-procesados')) return;
-        
-        var tag = el.tagName.toLowerCase();
-        if (tag === 'style' || tag === 'script' || tag === 'df-messenger' || tag === 'a') return;
-        
-    /* ══════════════════════════════════════════════════════════════════
-       CONVERSIÓN DE ENLACES (VÍA INNERHTML)
-       Escanea el Shadow DOM en busca de textos de mensaje y reemplaza 
-       las URLs por etiquetas <a> usando innerHTML para preservar los \n
-    ══════════════════════════════════════════════════════════════════ */
-    function procesarEnlacesConInnerHTML() {
-      var df = document.querySelector('df-messenger');
-      if (!df || !df.shadowRoot) return;
-      
-      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
-      if (!dfChat || !dfChat.shadowRoot) return;
-      
-      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
-      if (!dfMsgList || !dfMsgList.shadowRoot) return;
-      
-      var bubbles = dfMsgList.shadowRoot.querySelectorAll('df-message-bubble');
-      bubbles.forEach(function(bubble) {
-        if (!bubble.shadowRoot || bubble.hasAttribute('data-enlaces-procesados')) return;
-        
-        var content = bubble.shadowRoot.querySelector('.df-message-bubble-content') || bubble.shadowRoot.querySelector('.message-text');
-        
-        if (content && content.innerHTML) {
-          var htmlOriginal = content.innerHTML;
-          
-          /* Evitar procesar si ya contiene un enlace HTML para no romperlo */
-          if (htmlOriginal.indexOf('<a ') === -1 && htmlOriginal.match(/https?:\/\//)) {
-            var urlRegex = /(https?:\/\/[^\s<]+)/g;
-            
-            /* Reemplazo por regex preservando saltos de línea y estructura */
-            var nuevoHtml = htmlOriginal.replace(urlRegex, function(url) {
-              return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="pointer-events: auto !important; cursor: pointer !important; color: #0066cc !important; text-decoration: underline !important; font-weight: bold !important;">' + url + '</a>';
-            });
-            
-            content.innerHTML = nuevoHtml;
-          }
-          
-          /* Marcar como procesado independientemente para no iterarlo en loop */
-          bubble.setAttribute('data-enlaces-procesados', 'true');
-        }
-      });
-    }
 
-    /* ── Intercepción directa del evento de respuesta de Dialogflow ── */
-    window.addEventListener('df-response-received', function() {
-      /* Le damos un brevísimo delay para asegurar que el componente
-         haya terminado de renderizar la burbuja en el DOM */
-      setTimeout(function() {
-        procesarEnlacesConInnerHTML();
-      }, 50);
-    });
 
     /* ══════════════════════════════════════════════════════════════════
        MUTATIONOBSERVER
@@ -435,7 +359,6 @@
         if (hayNuevos) {
           ocultarLauncher();
           aplicarEstilos();
-          procesarEnlacesConInnerHTML();
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
@@ -445,7 +368,6 @@
     window.addEventListener('dfMessengerLoaded', function () {
       aplicarEstilos();
       ocultarLauncher();
-      procesarEnlacesConInnerHTML();
       inyectarEnTodosLosNiveles();
     });
 
@@ -454,7 +376,6 @@
       setTimeout(function () {
         aplicarEstilos();
         ocultarLauncher();
-        procesarEnlacesConInnerHTML();
         inyectarEnTodosLosNiveles();
       }, ms);
     });
