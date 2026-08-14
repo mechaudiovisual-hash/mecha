@@ -346,78 +346,42 @@
 
 
     /* ══════════════════════════════════════════════════════════════════
-       ENVOLTORIO QUIRÚRGICO DE URLS (SPAN NATIVO)
-       Divide los Nodos de Texto puros para envolver solo la URL en 
-       una etiqueta <span> con estilos y eventos, sin tocar innerHTML.
+       CAPTURA NATIVA POR POINTERDOWN (CERO MUTACIÓN DOM)
+       Intercepta el toque en la pantalla antes del Shadow DOM, busca 
+       si el texto contiene una URL, la extrae y la abre sincrónicamente.
+       Evita cualquier modificación del HTML para no resetear Stencil.js.
     ══════════════════════════════════════════════════════════════════ */
-    function procesarNodosDeTextoConSpan(elemento) {
-      var root = elemento.shadowRoot || elemento;
-      var childNodes = Array.prototype.slice.call(root.childNodes);
+    document.addEventListener('pointerdown', function(e) {
+      if (e.button !== 0) return; /* Solo clic principal / toque */
+
+      /* 1. Ruta interna completa del evento a través de los Shadow Roots */
+      var path = e.composedPath ? e.composedPath() : (e.path || []);
       
-      for (var i = 0; i < childNodes.length; i++) {
-        var child = childNodes[i];
+      /* 2. Inspeccionamos desde el nodo más profundo hacia arriba */
+      for (var i = 0; i < path.length; i++) {
+        var node = path[i];
         
-        if (child.nodeType === Node.TEXT_NODE) {
-          var text = child.nodeValue;
-          var urlRegex = /(https?:\/\/[^\s]+)/g;
+        /* Validamos que sea un nodo de elemento con texto */
+        if (node && node.nodeType === Node.ELEMENT_NODE && node.textContent) {
+          var text = node.textContent;
           
-          if (urlRegex.test(text)) {
-            var parts = text.split(urlRegex);
-            var fragment = document.createDocumentFragment();
+          /* Si este nodo en particular contiene una URL */
+          if (text.match(/https?:\/\//)) {
+            var urlRegex = /(https?:\/\/[^\s]+)/;
+            var match = text.match(urlRegex);
             
-            for (var j = 0; j < parts.length; j++) {
-              var part = parts[j];
-              if (part.match(/^https?:\/\//)) {
-                var span = document.createElement('span');
-                span.className = 'mecha-url';
-                span.style.cssText = 'color: #0066cc !important; cursor: pointer !important; text-decoration: underline !important; pointer-events: auto !important;';
-                span.textContent = part;
-                
-                /* Closure para aislar la URL correcta en el listener */
-                (function(url) {
-                  span.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    window.open(url, '_blank');
-                  });
-                })(part);
-                
-                fragment.appendChild(span);
-              } else if (part) {
-                fragment.appendChild(document.createTextNode(part));
-              }
+            if (match && match[0]) {
+              /* 3. Ejecución totalmente sincrónica y directa */
+              window.open(match[0], '_blank', 'noopener,noreferrer');
+              
+              /* Evitamos que el clic se siga propagando si ya abrimos el link */
+              e.stopPropagation();
+              return;
             }
-            child.parentNode.replaceChild(fragment, child);
           }
-        } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() !== 'span' && child.tagName.toLowerCase() !== 'a') {
-          procesarNodosDeTextoConSpan(child);
         }
       }
-    }
-
-    function iniciarObserverEnlacesSpan() {
-      var df = document.querySelector('df-messenger');
-      if (!df || !df.shadowRoot) return;
-      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
-      if (!dfChat || !dfChat.shadowRoot) return;
-      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
-      if (!dfMsgList || !dfMsgList.shadowRoot) return;
-
-      if (dfMsgList.getAttribute('data-observer-span') === 'true') return;
-      dfMsgList.setAttribute('data-observer-span', 'true');
-
-      var observer = new MutationObserver(function(mutations) {
-        var hayNuevos = mutations.some(function(m) { return m.addedNodes.length > 0; });
-        if (hayNuevos) {
-          var bubbles = dfMsgList.shadowRoot.querySelectorAll('df-message-bubble, .message-text');
-          bubbles.forEach(function(bubble) {
-            if (bubble.hasAttribute('data-span-procesado')) return;
-            procesarNodosDeTextoConSpan(bubble);
-            bubble.setAttribute('data-span-procesado', 'true');
-          });
-        }
-      });
-      observer.observe(dfMsgList.shadowRoot, { childList: true, subtree: true });
-    }
+    }, true);
 
     /* ══════════════════════════════════════════════════════════════════
        MUTATIONOBSERVER GLOBAL (Launcher y Estilos)
@@ -442,7 +406,6 @@
       aplicarEstilos();
       ocultarLauncher();
       inyectarEnTodosLosNiveles();
-      iniciarObserverEnlacesSpan();
     });
 
     /* ── Fallbacks escalonados (por si dfMessengerLoaded no dispara) ─ */
@@ -451,7 +414,6 @@
         aplicarEstilos();
         ocultarLauncher();
         inyectarEnTodosLosNiveles();
-        iniciarObserverEnlacesSpan();
       }, ms);
     });
 
