@@ -346,7 +346,78 @@
 
 
     /* ══════════════════════════════════════════════════════════════════
-       MUTATIONOBSERVER
+       LINKIFICACIÓN SEGURA (NODOS DE TEXTO)
+       Detecta URLs en formato de texto plano y las convierte a <a> usando 
+       estrictamente Node.TEXT_NODE y replaceChild(), prohibiendo innerHTML 
+       para preservar todos los saltos de línea y el CSS estructural.
+    ══════════════════════════════════════════════════════════════════ */
+    function procesarNodosDeTexto(elemento) {
+      var root = elemento.shadowRoot || elemento;
+      var childNodes = Array.prototype.slice.call(root.childNodes);
+      
+      for (var i = 0; i < childNodes.length; i++) {
+        var child = childNodes[i];
+        
+        if (child.nodeType === Node.TEXT_NODE) {
+          var text = child.nodeValue;
+          var urlRegex = /(https?:\/\/[^\s]+)/g;
+          
+          if (urlRegex.test(text)) {
+            var parts = text.split(urlRegex);
+            var fragment = document.createDocumentFragment();
+            
+            for (var j = 0; j < parts.length; j++) {
+              var part = parts[j];
+              if (part.match(/^https?:\/\//)) {
+                var a = document.createElement('a');
+                a.href = part;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.style.cssText = 'color: #0066cc; text-decoration: underline; cursor: pointer; pointer-events: auto !important;';
+                a.textContent = part;
+                fragment.appendChild(a);
+              } else if (part) {
+                fragment.appendChild(document.createTextNode(part));
+              }
+            }
+            child.parentNode.replaceChild(fragment, child);
+          }
+        } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() !== 'a') {
+          procesarNodosDeTexto(child);
+        }
+      }
+    }
+
+    function iniciarObserverEnlaces() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (!dfMsgList || !dfMsgList.shadowRoot) return;
+
+      /* Verificamos si ya pusimos el observer para no duplicar */
+      if (dfMsgList.getAttribute('data-observer-enlaces') === 'true') return;
+      dfMsgList.setAttribute('data-observer-enlaces', 'true');
+
+      var observer = new MutationObserver(function(mutations) {
+        var hayNuevos = mutations.some(function(m) { return m.addedNodes.length > 0; });
+        if (hayNuevos) {
+          var bubbles = dfMsgList.shadowRoot.querySelectorAll('df-message-bubble, .message-text');
+          bubbles.forEach(function(bubble) {
+            /* Marca de agua para evitar procesamiento repetido */
+            if (bubble.hasAttribute('data-linkified')) return;
+            
+            procesarNodosDeTexto(bubble);
+            bubble.setAttribute('data-linkified', 'true');
+          });
+        }
+      });
+      observer.observe(dfMsgList.shadowRoot, { childList: true, subtree: true });
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       MUTATIONOBSERVER GLOBAL (Launcher y Estilos)
        El launcher y los mensajes pueden ser insertados dinámicamente.
        Este observer los intercepta y oculta en tiempo real, sin importar
        cuándo los agregue Dialogflow.
@@ -364,11 +435,11 @@
       observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    /* ── Eventos oficiales de inicialización ─────────────────────────── */
     window.addEventListener('dfMessengerLoaded', function () {
       aplicarEstilos();
       ocultarLauncher();
       inyectarEnTodosLosNiveles();
+      iniciarObserverEnlaces();
     });
 
     /* ── Fallbacks escalonados (por si dfMessengerLoaded no dispara) ─ */
@@ -377,6 +448,7 @@
         aplicarEstilos();
         ocultarLauncher();
         inyectarEnTodosLosNiveles();
+        iniciarObserverEnlaces();
       }, ms);
     });
 
