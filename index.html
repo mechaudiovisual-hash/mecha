@@ -346,45 +346,7 @@
 
 
     /* ══════════════════════════════════════════════════════════════════
-       CAPTURA NATIVA POR POINTERDOWN (CERO MUTACIÓN DOM)
-       Intercepta el toque en la pantalla antes del Shadow DOM, busca 
-       si el texto contiene una URL, la extrae y la abre sincrónicamente.
-       Evita cualquier modificación del HTML para no resetear Stencil.js.
-    ══════════════════════════════════════════════════════════════════ */
-    document.addEventListener('pointerdown', function(e) {
-      if (e.button !== 0) return; /* Solo clic principal / toque */
-
-      /* 1. Ruta interna completa del evento a través de los Shadow Roots */
-      var path = e.composedPath ? e.composedPath() : (e.path || []);
-      
-      /* 2. Inspeccionamos desde el nodo más profundo hacia arriba */
-      for (var i = 0; i < path.length; i++) {
-        var node = path[i];
-        
-        /* Validamos que sea un nodo de elemento con texto */
-        if (node && node.nodeType === Node.ELEMENT_NODE && node.textContent) {
-          var text = node.textContent;
-          
-          /* Si este nodo en particular contiene una URL */
-          if (text.match(/https?:\/\//)) {
-            var urlRegex = /(https?:\/\/[^\s]+)/;
-            var match = text.match(urlRegex);
-            
-            if (match && match[0]) {
-              /* 3. Ejecución totalmente sincrónica y directa */
-              window.open(match[0], '_blank', 'noopener,noreferrer');
-              
-              /* Evitamos que el clic se siga propagando si ya abrimos el link */
-              e.stopPropagation();
-              return;
-            }
-          }
-        }
-      }
-    }, true);
-
-    /* ══════════════════════════════════════════════════════════════════
-       MUTATIONOBSERVER GLOBAL (Launcher y Estilos)
+       MUTATIONOBSERVER
        El launcher y los mensajes pueden ser insertados dinámicamente.
        Este observer los intercepta y oculta en tiempo real, sin importar
        cuándo los agregue Dialogflow.
@@ -402,6 +364,7 @@
       observer.observe(document.body, { childList: true, subtree: true });
     }
 
+    /* ── Eventos oficiales de inicialización ─────────────────────────── */
     window.addEventListener('dfMessengerLoaded', function () {
       aplicarEstilos();
       ocultarLauncher();
