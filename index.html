@@ -94,14 +94,52 @@
       /* Botón de enviar */
       --df-messenger-send-icon:                      #8E44AD;
 
-      /* Chips / sugerencias rápidas */
-      --df-messenger-button-background:              #f0e5fc;
-      --df-messenger-button-font-color:              #6C2D9E;
-      --df-messenger-button-border:                  1px solid #8E44AD;
+      /* Chips / sugerencias rápidas - Estilo YouTube Rojo */
+      --df-messenger-button-background:              #FF0000;
+      --df-messenger-button-font-color:              #ffffff;
+      --df-messenger-button-border:                  1px solid #FF0000;
 
       /* Tipografía */
       --df-messenger-font-color:                     #2d0052;
       --df-messenger-font-family:                    'Segoe UI', Arial, sans-serif;
+    }
+
+    /* ─── Chips / Botones estilo YouTube en CSS de nivel superior ──── */
+    df-messenger >>> df-messenger-button,
+    df-messenger >>> button.df-messenger-button,
+    df-messenger >>> .df-messenger-button,
+    df-messenger >>> df-chip,
+    df-messenger >>> .df-chip,
+    df-messenger::part(button) {
+      background-color: #FF0000 !important;
+      background:       #FF0000 !important;
+      color:            #ffffff !important;
+      fill:             #ffffff !important;
+      border:           none    !important;
+      border-radius:    18px    !important;
+      padding:          6px 14px !important;
+      display:          inline-flex !important;
+      align-items:      center !important;
+      justify-content:  center !important;
+      gap:              6px !important;
+      font-weight:      600 !important;
+      line-height:      1.2 !important;
+      vertical-align:   middle !important;
+      text-decoration:  none !important;
+      box-shadow:       0 2px 5px rgba(255, 0, 0, 0.3) !important;
+      cursor:           pointer !important;
+    }
+    df-messenger >>> df-messenger-button svg,
+    df-messenger >>> button.df-messenger-button svg,
+    df-messenger >>> .df-messenger-button svg,
+    df-messenger >>> df-messenger-button .material-icons,
+    df-messenger >>> button.df-messenger-button .material-icons {
+      fill:             #ffffff !important;
+      color:            #ffffff !important;
+      width:            16px !important;
+      height:           16px !important;
+      display:          inline-block !important;
+      vertical-align:   middle !important;
     }
 
     /* ─── Estilo para ocultar el botón disparador nativo ─────────────── */
@@ -249,6 +287,46 @@
         '  max-width: none !important;',
         '}',
 
+        /* ── Chips / Botones estilo YouTube con alineación centrada ── */
+        'df-messenger-button,',
+        'button.df-messenger-button,',
+        '.df-messenger-button,',
+        'df-chip,',
+        '.df-chip,',
+        '[part="button"] {',
+        '  background-color: #FF0000 !important;',
+        '  background:       #FF0000 !important;',
+        '  color:            #ffffff !important;',
+        '  fill:             #ffffff !important;',
+        '  border:           none    !important;',
+        '  border-radius:    18px    !important;',
+        '  padding:          6px 14px !important;',
+        '  display:          inline-flex !important;',
+        '  align-items:      center !important;',
+        '  justify-content:  center !important;',
+        '  gap:              6px !important;',
+        '  font-weight:      600 !important;',
+        '  line-height:      1.2 !important;',
+        '  vertical-align:   middle !important;',
+        '  text-decoration:  none !important;',
+        '  box-shadow:       0 2px 5px rgba(255, 0, 0, 0.3) !important;',
+        '  cursor:           pointer !important;',
+        '}',
+        'df-messenger-button svg,',
+        'button.df-messenger-button svg,',
+        '.df-messenger-button svg,',
+        'df-messenger-button .material-icons,',
+        'button.df-messenger-button .material-icons,',
+        'df-messenger-button path,',
+        'button.df-messenger-button path {',
+        '  fill:             #ffffff !important;',
+        '  color:            #ffffff !important;',
+        '  width:            16px !important;',
+        '  height:           16px !important;',
+        '  display:          inline-block !important;',
+        '  vertical-align:   middle !important;',
+        '}',
+
         /* ── Ocultar launcher FAB — todos los selectores conocidos ───── */
         'df-messenger-chat-bubble,',
         '[part="chat-bubble"],',
@@ -256,7 +334,6 @@
         'button#widgetIcon,',
         'button.df-messenger-chat-bubble,',
         '.df-messenger-chat-bubble,',
-        'df-messenger-button,',
         'button[class*="bubble"],',
         'button[class*="launcher"],',
         'button[class*="widget"] {',
@@ -322,7 +399,6 @@
         '[part="launcher"]',
         'button#widgetIcon',
         '.df-messenger-chat-bubble',
-        'df-messenger-button',
         'button[class*="bubble"]',
         'button[class*="launcher"]',
         'button[class*="widget"]'
@@ -434,8 +510,50 @@
       '.messages-container {',
       '  flex:         1 1 auto !important;',
       '  overflow-y:   auto     !important;',
+      '  overflow-x:   hidden   !important;',
       '  height:       100%     !important;',
       '  max-height:   100%     !important;',
+      '  min-height:   0        !important;',
+      '}',
+
+      /* ── Chips / Botones estilo YouTube con alineación centrada ──── */
+      'df-messenger-button,',
+      'button.df-messenger-button,',
+      '.df-messenger-button,',
+      'df-chip,',
+      '.df-chip,',
+      '[part="button"] {',
+      '  background-color: #FF0000 !important;',
+      '  background:       #FF0000 !important;',
+      '  color:            #ffffff !important;',
+      '  fill:             #ffffff !important;',
+      '  border:           none    !important;',
+      '  border-radius:    18px    !important;',
+      '  padding:          6px 14px !important;',
+      '  display:          inline-flex !important;',
+      '  align-items:      center !important;',
+      '  justify-content:  center !important;',
+      '  gap:              6px !important;',
+      '  font-weight:      600 !important;',
+      '  line-height:      1.2 !important;',
+      '  vertical-align:   middle !important;',
+      '  text-decoration:  none !important;',
+      '  box-shadow:       0 2px 5px rgba(255, 0, 0, 0.3) !important;',
+      '  cursor:           pointer !important;',
+      '}',
+      'df-messenger-button svg,',
+      'button.df-messenger-button svg,',
+      '.df-messenger-button svg,',
+      'df-messenger-button .material-icons,',
+      'button.df-messenger-button .material-icons,',
+      'df-messenger-button path,',
+      'button.df-messenger-button path {',
+      '  fill:             #ffffff !important;',
+      '  color:            #ffffff !important;',
+      '  width:            16px !important;',
+      '  height:           16px !important;',
+      '  display:          inline-block !important;',
+      '  vertical-align:   middle !important;',
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
