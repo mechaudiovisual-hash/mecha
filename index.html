@@ -94,52 +94,106 @@
       /* Botón de enviar */
       --df-messenger-send-icon:                      #8E44AD;
 
+      /* Control de la caja de chat y botones */
+      --df-messenger-chat-padding:                   10px;
+      --df-messenger-button-title-color:             #ffffff;
+
       /* Chips / sugerencias rápidas - Estilo YouTube Rojo */
       --df-messenger-button-background:              #FF0000;
       --df-messenger-button-font-color:              #ffffff;
       --df-messenger-button-border:                  1px solid #FF0000;
+      --df-messenger-chip-background:                #FF0000;
+      --df-messenger-chip-color:                     #ffffff;
+      --df-messenger-chip-border:                    1px solid #FF0000;
 
       /* Tipografía */
       --df-messenger-font-color:                     #2d0052;
       --df-messenger-font-family:                    'Segoe UI', Arial, sans-serif;
     }
 
-    /* ─── Chips / Botones estilo YouTube en CSS de nivel superior ──── */
+    /* ─── Estilo y centrado de los chips (Botón tipo YouTube) ────────── */
+    df-messenger-user-input {
+      --df-messenger-user-input-chip-background: #FF0000;
+      --df-messenger-user-input-chip-color: #FFFFFF;
+    }
+
+    /* ─── Reglas de ajuste vertical y diseño de Chips / Botones ──────── */
+    df-messenger ::part(chip),
+    df-messenger::part(chip),
+    df-messenger ::part(button),
+    df-messenger::part(button),
     df-messenger >>> df-messenger-button,
     df-messenger >>> button.df-messenger-button,
     df-messenger >>> .df-messenger-button,
+    df-messenger >>> df-button,
+    df-messenger >>> .df-button,
+    df-messenger >>> a.df-button,
     df-messenger >>> df-chip,
     df-messenger >>> .df-chip,
-    df-messenger::part(button) {
+    df-messenger >>> .chip {
       background-color: #FF0000 !important;
       background:       #FF0000 !important;
-      color:            #ffffff !important;
-      fill:             #ffffff !important;
+      color:            #FFFFFF !important;
+      fill:             #FFFFFF !important;
       border:           none    !important;
       border-radius:    18px    !important;
       padding:          6px 14px !important;
       display:          inline-flex !important;
       align-items:      center !important;
       justify-content:  center !important;
-      gap:              6px !important;
+      gap:              8px !important;
       font-weight:      600 !important;
-      line-height:      1.2 !important;
+      line-height:      normal !important;
       vertical-align:   middle !important;
       text-decoration:  none !important;
       box-shadow:       0 2px 5px rgba(255, 0, 0, 0.3) !important;
       cursor:           pointer !important;
     }
+
+    /* Centrado vertical simétrico para todos los elementos internos (texto, íconos, flechas) */
+    df-messenger ::part(chip) *,
+    df-messenger::part(chip) *,
+    df-messenger ::part(button) *,
+    df-messenger::part(button) *,
+    df-messenger >>> df-button *,
+    df-messenger >>> .df-button *,
+    df-messenger >>> df-chip *,
+    df-messenger >>> .df-chip *,
+    df-messenger >>> df-messenger-button * {
+      color:            #FFFFFF !important;
+      fill:             #FFFFFF !important;
+      vertical-align:   middle !important;
+      display:          inline-flex !important;
+      align-items:      center !important;
+      align-self:       center !important;
+      line-height:      normal !important;
+    }
+
+    /* Íconos SVG, Material Icons y flecha externa [↗] alineados al centro */
+    df-messenger ::part(chip) svg,
+    df-messenger ::part(button) svg,
     df-messenger >>> df-messenger-button svg,
     df-messenger >>> button.df-messenger-button svg,
     df-messenger >>> .df-messenger-button svg,
+    df-messenger >>> df-button svg,
+    df-messenger >>> .df-button svg,
+    df-messenger >>> df-chip svg,
+    df-messenger >>> .df-chip svg,
     df-messenger >>> df-messenger-button .material-icons,
-    df-messenger >>> button.df-messenger-button .material-icons {
-      fill:             #ffffff !important;
-      color:            #ffffff !important;
+    df-messenger >>> button.df-messenger-button .material-icons,
+    df-messenger >>> .material-icons {
+      fill:             #FFFFFF !important;
+      color:            #FFFFFF !important;
       width:            16px !important;
       height:           16px !important;
+      min-width:        16px !important;
+      min-height:       16px !important;
       display:          inline-block !important;
       vertical-align:   middle !important;
+      align-self:       center !important;
+      margin:           0 !important;
+      position:         static !important;
+      top:              auto !important;
     }
 
     /* ─── Estilo para ocultar el botón disparador nativo ─────────────── */
@@ -257,42 +311,17 @@
 
         /* ── Respetar saltos de línea en burbujas ────────────────────── */
         '.message, div.message, .text-message, df-message, [part="message"] {',
-        '  white-space: pre-wrap !important;',
-        '}',
-
-        /* ── Titlebar violeta ────────────────────────────────────────── */
-        'df-messenger-titlebar,',
-        '[part="titlebar"],',
-        '.df-messenger-titlebar,',
-        '.title-wrapper,',
-        '.header {',
-        '  background:       ' + V.violeta + ' !important;',
-        '  background-color: ' + V.violeta + ' !important;',
-        '}',
-        '.title, [part="title"], df-messenger-titlebar span, h1, h2, .agent-name {',
-        '  color: ' + V.blanco + ' !important;',
-        '}',
-        'df-messenger-titlebar svg path, [part="close-icon"], .material-icons {',
-        '  fill:  ' + V.blanco + ' !important;',
-        '  color: ' + V.blanco + ' !important;',
-        '}',
-
-        /* ── Barra de entrada: ocupa todo el ancho disponible ────────── */
-        'df-messenger-input-box,',
-        '.input-box-wrapper,',
-        'input[type="text"],',
-        'textarea,',
-        'df-messenger-user-input {',
-        '  width:     100% !important;',
-        '  max-width: none !important;',
-        '}',
-
-        /* ── Chips / Botones estilo YouTube con alineación centrada ── */
+               /* ── Chips / Botones estilo YouTube con alineación centrada ── */
         'df-messenger-button,',
         'button.df-messenger-button,',
         '.df-messenger-button,',
+        'df-button,',
+        '.df-button,',
+        'a.df-button,',
         'df-chip,',
         '.df-chip,',
+        '.chip,',
+        '[part="chip"],',
         '[part="button"] {',
         '  background-color: #FF0000 !important;',
         '  background:       #FF0000 !important;',
@@ -304,17 +333,39 @@
         '  display:          inline-flex !important;',
         '  align-items:      center !important;',
         '  justify-content:  center !important;',
-        '  gap:              6px !important;',
+        '  gap:              8px !important;',
         '  font-weight:      600 !important;',
-        '  line-height:      1.2 !important;',
+        '  line-height:      normal !important;',
         '  vertical-align:   middle !important;',
         '  text-decoration:  none !important;',
         '  box-shadow:       0 2px 5px rgba(255, 0, 0, 0.3) !important;',
         '  cursor:           pointer !important;',
         '}',
+        'df-messenger-button *,',
+        '.df-messenger-button *,',
+        'df-button *,',
+        '.df-button *,',
+        'df-chip *,',
+        '.df-chip *,',
+        '[part="chip"] *,',
+        '[part="button"] * {',
+        '  color:            #ffffff !important;',
+        '  fill:             #ffffff !important;',
+        '  vertical-align:   middle !important;',
+        '  display:          inline-flex !important;',
+        '  align-items:      center !important;',
+        '  align-self:       center !important;',
+        '  line-height:      normal !important;',
+        '}',
         'df-messenger-button svg,',
         'button.df-messenger-button svg,',
         '.df-messenger-button svg,',
+        'df-button svg,',
+        '.df-button svg,',
+        'df-chip svg,',
+        '.df-chip svg,',
+        '[part="chip"] svg,',
+        '[part="button"] svg,',
         'df-messenger-button .material-icons,',
         'button.df-messenger-button .material-icons,',
         'df-messenger-button path,',
@@ -323,8 +374,14 @@
         '  color:            #ffffff !important;',
         '  width:            16px !important;',
         '  height:           16px !important;',
+        '  min-width:        16px !important;',
+        '  min-height:       16px !important;',
         '  display:          inline-block !important;',
         '  vertical-align:   middle !important;',
+        '  align-self:       center !important;',
+        '  margin:           0 !important;',
+        '  position:         static !important;',
+        '  top:              auto !important;',
         '}',
 
         /* ── Ocultar launcher FAB — todos los selectores conocidos ───── */
@@ -399,8 +456,8 @@
         '[part="launcher"]',
         'button#widgetIcon',
         '.df-messenger-chat-bubble',
-        'button[class*="bubble"]',
-        'button[class*="launcher"]',
+        'button[class*="bubble"],',
+        'button[class*="launcher"],',
         'button[class*="widget"]'
       ];
 
@@ -435,6 +492,7 @@
         if (hayNuevos) {
           ocultarLauncher();
           aplicarEstilos();
+          inyectarEnTodosLosNiveles();
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
@@ -520,8 +578,13 @@
       'df-messenger-button,',
       'button.df-messenger-button,',
       '.df-messenger-button,',
+      'df-button,',
+      '.df-button,',
+      'a.df-button,',
       'df-chip,',
       '.df-chip,',
+      '.chip,',
+      '[part="chip"],',
       '[part="button"] {',
       '  background-color: #FF0000 !important;',
       '  background:       #FF0000 !important;',
@@ -533,17 +596,39 @@
       '  display:          inline-flex !important;',
       '  align-items:      center !important;',
       '  justify-content:  center !important;',
-      '  gap:              6px !important;',
+      '  gap:              8px !important;',
       '  font-weight:      600 !important;',
-      '  line-height:      1.2 !important;',
+      '  line-height:      normal !important;',
       '  vertical-align:   middle !important;',
       '  text-decoration:  none !important;',
       '  box-shadow:       0 2px 5px rgba(255, 0, 0, 0.3) !important;',
       '  cursor:           pointer !important;',
       '}',
+      'df-messenger-button *,',
+      '.df-messenger-button *,',
+      'df-button *,',
+      '.df-button *,',
+      'df-chip *,',
+      '.df-chip *,',
+      '[part="chip"] *,',
+      '[part="button"] * {',
+      '  color:            #ffffff !important;',
+      '  fill:             #ffffff !important;',
+      '  vertical-align:   middle !important;',
+      '  display:          inline-flex !important;',
+      '  align-items:      center !important;',
+      '  align-self:       center !important;',
+      '  line-height:      normal !important;',
+      '}',
       'df-messenger-button svg,',
       'button.df-messenger-button svg,',
       '.df-messenger-button svg,',
+      'df-button svg,',
+      '.df-button svg,',
+      'df-chip svg,',
+      '.df-chip svg,',
+      '[part="chip"] svg,',
+      '[part="button"] svg,',
       'df-messenger-button .material-icons,',
       'button.df-messenger-button .material-icons,',
       'df-messenger-button path,',
@@ -552,8 +637,14 @@
       '  color:            #ffffff !important;',
       '  width:            16px !important;',
       '  height:           16px !important;',
+      '  min-width:        16px !important;',
+      '  min-height:       16px !important;',
       '  display:          inline-block !important;',
       '  vertical-align:   middle !important;',
+      '  align-self:       center !important;',
+      '  margin:           0 !important;',
+      '  position:         static !important;',
+      '  top:              auto !important;',
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
@@ -595,10 +686,10 @@
       if (dfMsgList && dfMsgList.shadowRoot) {
         inyectarLinebreaks(dfMsgList.shadowRoot, 'lb-msglist');
 
-        /* N3 — df-message-bubble: una por cada respuesta del bot */
-        dfMsgList.shadowRoot.querySelectorAll('df-message-bubble').forEach(function (bubble, i) {
-          if (bubble.shadowRoot) {
-            inyectarLinebreaks(bubble.shadowRoot, 'lb-bubble-' + i);
+        /* N3 — df-message-bubble y todos los subcomponentes con shadowRoot */
+        dfMsgList.shadowRoot.querySelectorAll('*').forEach(function (el, i) {
+          if (el.shadowRoot) {
+            inyectarLinebreaks(el.shadowRoot, 'lb-sub-' + i);
           }
         });
       }
