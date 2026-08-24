@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
 
   <style>
-    /* Reset base */
+    /* Reset de marco */
     *, *::before, *::after {
       box-sizing: border-box;
     }
@@ -24,77 +24,19 @@
       overflow: hidden;
     }
 
-    /* Contenedor Principal en Pantalla Completa */
     .caja-mecha-premium {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      margin: 0 !important;
-      padding: 0 !important;
       z-index: 9999 !important;
     }
 
-    /* Estructura Nactiva Dialogflow ES */
     df-messenger {
       width: 100% !important;
       height: 100% !important;
       --df-messenger-button-titlebar-color: #8E24AA;
-      --df-messenger-chat-window-height: 100vh;
-      --df-messenger-chat-window-width: 100vw;
-      --df-messenger-font-color: #2c2c2c;
-      font-family: Roboto, sans-serif !important;
-    }
-
-    /* Ventana de chat a pantalla completa */
-    df-messenger ::part(chat-window) {
-      width: 100vw !important;
-      height: 100vh !important;
-      max-height: 100vh !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-    }
-
-    /* Encabezado (Barra de Título Violeta) */
-    df-messenger ::part(titlebar) {
-      background-color: #8E24AA !important;
-      color: #ffffff !important;
-    }
-
-    /* Ocultar botón flotante de apertura */
-    df-messenger ::part(launcher),
-    df-messenger ::part(chat-bubble) {
-      display: none !important;
-    }
-
-    /* Preservar saltos de línea en el texto */
-    df-messenger ::part(message) {
-      white-space: pre-wrap !important;
-      word-break: break-word !important;
-    }
-
-    /* Centrado de Botones (Chips) */
-    df-messenger ::part(chips) {
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      flex-wrap: wrap !important;
-      width: 100% !important;
-      margin: 10px 0 !important;
-    }
-
-    df-messenger ::part(chip) {
-      display: inline-flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      margin: 4px !important;
-      background-color: #ffffff !important;
-      border: 1px solid #dcdcdc !important;
-      border-radius: 18px !important;
     }
   </style>
 </head>
@@ -111,32 +53,52 @@
   </div>
 
   <script>
-    /* Ajuste quirúrgico puntual únicamente para elementos de texto y chips dinámicos */
-    function aplicarAjustesPuntuales() {
+    function inyectarCSS(root, id, css) {
+      if (!root || root.querySelector('#' + id)) return;
+      var style = document.createElement('style');
+      style.id = id;
+      style.textContent = css;
+      try { root.appendChild(style); } catch (e) {}
+    }
+
+    function fijarEstructuraEspecifica() {
       var df = document.querySelector('df-messenger');
       if (!df || !df.shadowRoot) return;
 
+      // Nivel 1: Forzar ventana a pantalla completa y ocultar launcher flotante
+      inyectarCSS(df.shadowRoot, 'fix-nivel-1', [
+        'df-messenger-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; max-height: 100vh !important; border-radius: 0 !important; }',
+        'df-messenger-chat-bubble, #widgetIcon, button.chat-bubble { display: none !important; opacity: 0 !important; pointer-events: none !important; }'
+      ].join('\n'));
+
+      // Nivel 2: Expandir contenedor interno del chat y fijar encabezado violeta
       var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
       if (!dfChat || !dfChat.shadowRoot) return;
 
+      inyectarCSS(dfChat.shadowRoot, 'fix-nivel-2', [
+        '.chat-wrapper, .chat-window, .wrapper { width: 100% !important; height: 100% !important; max-height: 100% !important; border-radius: 0 !important; box-shadow: none !important; }',
+        'df-messenger-titlebar { background-color: #8E24AA !important; }',
+        'df-message-list { flex: 1 1 auto !important; height: 100% !important; }'
+      ].join('\n'));
+
+      // Nivel 3: Formato de saltos de línea y centrado de botones (sin alterar burbujas de texto)
       var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
       if (!dfMsgList || !dfMsgList.shadowRoot) return;
 
-      var styleId = 'mecha-fix-clean';
-      if (!dfMsgList.shadowRoot.querySelector('#' + styleId)) {
-        var style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = [
-          '.message { white-space: pre-wrap !important; word-break: break-word !important; }',
-          'df-chips, .df-chips-wrapper { display: flex !important; justify-content: center !important; flex-wrap: wrap !important; width: 100% !important; }'
-        ].join('\n');
-        dfMsgList.shadowRoot.appendChild(style);
-      }
+      inyectarCSS(dfMsgList.shadowRoot, 'fix-nivel-3', [
+        '.message { white-space: pre-wrap !important; word-break: break-word !important; }',
+        'df-chips, .df-chips-wrapper { display: flex !important; justify-content: center !important; flex-wrap: wrap !important; width: 100% !important; margin: 8px 0 !important; }'
+      ].join('\n'));
     }
 
-    window.addEventListener('dfMessengerLoaded', aplicarAjustesPuntuales);
-    [300, 1000, 2500].forEach(function(ms) {
-      setTimeout(aplicarAjustesPuntuales, ms);
+    // Ejecución controlada tras la carga del componente
+    window.addEventListener('dfMessengerLoaded', fijarEstructuraEspecifica);
+    
+    var observer = new MutationObserver(fijarEstructuraEspecifica);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    [200, 600, 1500, 3000].forEach(function(ms) {
+      setTimeout(fijarEstructuraEspecifica, ms);
     });
   </script>
 
