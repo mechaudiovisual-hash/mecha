@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
 
-  <!-- Script oficial de Dialogflow ES Messenger (CDN Google) -->
+  <!-- Script oficial de Dialogflow ES Messenger -->
   <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
 
   <style>
     /* Reset base */
-    *, *::before, *::after { box-sizing: border-box; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
     html, body {
       margin: 0;
@@ -19,80 +21,80 @@
       height: 100%;
       background-color: #f4edf7;
       font-family: Roboto, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       overflow: hidden;
     }
 
-    /* Marco Global - Pantalla Completa Absoluta */
+    /* Contenedor Principal en Pantalla Completa */
     .caja-mecha-premium {
-      position:        fixed   !important;
-      top:             0       !important;
-      left:            0       !important;
-      width:           100vw   !important;
-      height:          100vh   !important;
-      margin:          0       !important;
-      padding:         0       !important;
-      max-width:       none    !important;
-      border-radius:   0       !important;
-      overflow:        hidden  !important;
-      z-index:         9999    !important;
-      box-shadow:      none    !important;
-      display:         flex    !important;
-      flex-direction:  column  !important;
-      justify-content: center  !important;
-      align-items:     center  !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      z-index: 9999 !important;
     }
 
-    /* Reglas Shadow Parts Nativas (Nivel Nivel Superior) */
-    df-messenger,
-    df-messenger ::part(chat-window),
-    df-messenger-chat {
-      width:      100% !important;
-      max-width:  100% !important;
-      height:     100% !important;
-      max-height: 100% !important;
-      --df-messenger-chat-window-width:  100% !important;
-      --df-messenger-chat-window-height: 100% !important;
-      --df-messenger-button-titlebar-color: #8E24AA !important;
+    /* Estructura Nactiva Dialogflow ES */
+    df-messenger {
+      width: 100% !important;
+      height: 100% !important;
+      --df-messenger-button-titlebar-color: #8E24AA;
+      --df-messenger-chat-window-height: 100vh;
+      --df-messenger-chat-window-width: 100vw;
+      --df-messenger-font-color: #2c2c2c;
       font-family: Roboto, sans-serif !important;
-      line-height: normal !important;
     }
 
-    df-messenger ::part(message-list) {
-      flex:       1 1 auto !important;
-      height:     100% !important;
-      max-height: none !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
+    /* Ventana de chat a pantalla completa */
+    df-messenger ::part(chat-window) {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
     }
 
-    df-messenger ::part(chips-wrapper),
-    df-messenger ::part(chips) {
-      display:         flex !important;
-      justify-content: center !important;
-      align-items:     center !important;
-      flex-wrap:       wrap !important;
-      width:           100% !important;
-      margin:          8px 0 !important;
+    /* Encabezado (Barra de Título Violeta) */
+    df-messenger ::part(titlebar) {
+      background-color: #8E24AA !important;
+      color: #ffffff !important;
     }
 
-    df-messenger::part(launcher),
-    df-messenger-chat-bubble,
-    df-messenger::part(chat-bubble) {
-      display:        none    !important;
-      visibility:     hidden  !important;
-      opacity:        0       !important;
-      pointer-events: none    !important;
-      width:          0       !important;
-      height:         0       !important;
-      overflow:       hidden  !important;
+    /* Ocultar botón flotante de apertura */
+    df-messenger ::part(launcher),
+    df-messenger ::part(chat-bubble) {
+      display: none !important;
     }
 
-    df-messenger::part(message) {
+    /* Preservar saltos de línea en el texto */
+    df-messenger ::part(message) {
       white-space: pre-wrap !important;
-      word-break:  break-word !important;
+      word-break: break-word !important;
+    }
+
+    /* Centrado de Botones (Chips) */
+    df-messenger ::part(chips) {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      flex-wrap: wrap !important;
+      width: 100% !important;
+      margin: 10px 0 !important;
+    }
+
+    df-messenger ::part(chip) {
+      display: inline-flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      margin: 4px !important;
+      background-color: #ffffff !important;
+      border: 1px solid #dcdcdc !important;
+      border-radius: 18px !important;
     }
   </style>
 </head>
@@ -109,150 +111,33 @@
   </div>
 
   <script>
-    (function () {
-      var COLOR_VIOLETA = '#8E24AA';
+    /* Ajuste quirúrgico puntual únicamente para elementos de texto y chips dinámicos */
+    function aplicarAjustesPuntuales() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
 
-      /* Hoja de estilo maestra inyectada recursivamente en cada Shadow Root */
-      var MASTER_CSS = [
-        ':host {',
-        '  --df-messenger-brand-color: ' + COLOR_VIOLETA + ' !important;',
-        '  --df-messenger-button-titlebar-color: ' + COLOR_VIOLETA + ' !important;',
-        '  --df-messenger-chat-window-width: 100% !important;',
-        '  --df-messenger-chat-window-height: 100% !important;',
-        '  font-family: Roboto, sans-serif !important;',
-        '}',
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
 
-        /* 1. Fluidez de altura y ancho sin límites fijos */
-        '.df-messenger-wrapper, .chat-wrapper, .chat-window, .messenger-container, df-messenger-chat {',
-        '  width: 100% !important;',
-        '  max-width: 100% !important;',
-        '  height: 100% !important;',
-        '  max-height: none !important;',
-        '  position: relative !important;',
-        '  box-shadow: none !important;',
-        '}',
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (!dfMsgList || !dfMsgList.shadowRoot) return;
 
-        /* 2. Área de mensajes con scroll responsivo */
-        '[part="message-list"], #messageList, df-message-list, .message-list, .chat-body, .messages-container {',
-        '  flex: 1 1 auto !important;',
-        '  height: 100% !important;',
-        '  max-height: none !important;',
-        '  overflow-y: auto !important;',
-        '  overflow-x: hidden !important;',
-        '  box-sizing: border-box !important;',
-        '}',
-
-        /* 3. Respeto de saltos de línea */
-        '* { word-break: break-word !important; }',
-        '.message-text, df-message-bubble, .df-message-bubble-content,',
-        '.message, div.message, .text-message, df-message, [part="message"],',
-        '.bot-message, .bot-message p, .response-text, p {',
-        '  white-space: pre-wrap !important;',
-        '  line-height: 1.5 !important;',
-        '}',
-
-        /* 4. Encabezado e Input */
-        'df-messenger-titlebar, [part="titlebar"], .df-messenger-titlebar, .header {',
-        '  background-color: ' + COLOR_VIOLETA + ' !important;',
-        '  flex-shrink: 0 !important;',
-        '}',
-        '.title, [part="title"], df-messenger-titlebar span, .agent-name { color: #ffffff !important; }',
-        'df-messenger-user-input, .input-area { flex-shrink: 0 !important; width: 100% !important; }',
-
-        /* 5. Centrado estricto de botones (Chips/Cards) */
-        'df-chips, .df-chips, .chips-wrapper, [part="chips"], [part="chips-wrapper"], .df-chips-container {',
-        '  display: flex !important;',
-        '  justify-content: center !important;',
-        '  align-items: center !important;',
-        '  flex-wrap: wrap !important;',
-        '  width: 100% !important;',
-        '  margin: 10px auto !important;',
-        '  box-sizing: border-box !important;',
-        '}',
-
-        '[part="chip"], df-chip, .df-chip, .chip, df-messenger-button,',
-        'button.df-messenger-button, .df-messenger-button, df-button, .df-button, a.df-button {',
-        '  display: inline-flex !important;',
-        '  align-items: center !important;',
-        '  justify-content: center !important;',
-        '  height: 38px !important;',
-        '  line-height: 1 !important;',
-        '  padding: 0 16px !important;',
-        '  margin: 5px 4px !important;',
-        '  box-sizing: border-box !important;',
-        '  background-color: #ffffff !important;',
-        '  border: 1px solid #dcdcdc !important;',
-        '  border-radius: 18px !important;',
-        '  text-decoration: none !important;',
-        '  cursor: pointer !important;',
-        '  text-align: center !important;',
-        '}',
-
-        '[part="chip-text"], .df-chip-text, .chip-text, [part="chip"] span, df-chip span, df-button span {',
-        '  font-size: 14px !important;',
-        '  line-height: 1 !important;',
-        '  text-align: center !important;',
-        '}',
-
-        /* 6. Ocultar elemento flotante/launcher */
-        'df-messenger-chat-bubble, [part="chat-bubble"], [part="launcher"], button#widgetIcon {',
-        '  display: none !important; opacity: 0 !important; visibility: hidden !important; width: 0 !important; height: 0 !important;',
-        '}'
-      ].join('\n');
-
-      function inyectarEnRoot(targetRoot) {
-        if (!targetRoot) return;
-        var styleId = 'mecha-style-fix';
-        if (!targetRoot.querySelector || !targetRoot.querySelector('#' + styleId)) {
-          var style = document.createElement('style');
-          style.id = styleId;
-          style.textContent = MASTER_CSS;
-          try { targetRoot.appendChild(style); } catch (e) {}
-        }
+      var styleId = 'mecha-fix-clean';
+      if (!dfMsgList.shadowRoot.querySelector('#' + styleId)) {
+        var style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = [
+          '.message { white-space: pre-wrap !important; word-break: break-word !important; }',
+          'df-chips, .df-chips-wrapper { display: flex !important; justify-content: center !important; flex-wrap: wrap !important; width: 100% !important; }'
+        ].join('\n');
+        dfMsgList.shadowRoot.appendChild(style);
       }
+    }
 
-      var rootsObservados = new WeakSet();
-
-      /* Recorre todo el árbol de elementos y Shadow DOMs anidados */
-      function auditarYAplicar(node) {
-        if (!node) return;
-
-        if (node.shadowRoot) {
-          inyectarEnRoot(node.shadowRoot);
-
-          /* Si se crean nuevos elementos dentro de este Shadow Root, re-audita inmediatamente */
-          if (!rootsObservados.has(node.shadowRoot)) {
-            rootsObservados.add(node.shadowRoot);
-            var obs = new MutationObserver(function () {
-              auditarYAplicar(node);
-            });
-            obs.observe(node.shadowRoot, { childList: true, subtree: true });
-          }
-
-          Array.from(node.shadowRoot.querySelectorAll('*')).forEach(auditarYAplicar);
-        }
-
-        if (node.children) {
-          Array.from(node.children).forEach(auditarYAplicar);
-        }
-      }
-
-      function ejecutarAuditoriaGlobal() {
-        var df = document.querySelector('df-messenger');
-        if (df) auditarYAplicar(df);
-      }
-
-      /* Disparadores de auditoría */
-      window.addEventListener('dfMessengerLoaded', ejecutarAuditoriaGlobal);
-      window.addEventListener('DOMContentLoaded', ejecutarAuditoriaGlobal);
-
-      var observerDocument = new MutationObserver(ejecutarAuditoriaGlobal);
-      observerDocument.observe(document.body, { childList: true, subtree: true });
-
-      [100, 300, 700, 1500, 3000].forEach(function (delay) {
-        setTimeout(ejecutarAuditoriaGlobal, delay);
-      });
-    })();
+    window.addEventListener('dfMessengerLoaded', aplicarAjustesPuntuales);
+    [300, 1000, 2500].forEach(function(ms) {
+      setTimeout(aplicarAjustesPuntuales, ms);
+    });
   </script>
 
 </body>
