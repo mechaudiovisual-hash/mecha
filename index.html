@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
 
-  <!-- Script oficial de Dialogflow ES Messenger -->
+  <!-- Script oficial de Dialogflow ES Messenger (CDN Google, sin XSS) -->
   <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
 
   <style>
-    /* Reset de marco */
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
+    /* ─── Reset base ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
       margin: 0;
@@ -20,86 +18,549 @@
       width: 100%;
       height: 100%;
       background-color: #f4edf7;
-      font-family: Roboto, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       overflow: hidden;
     }
 
+    /* ─── Marco Global en Pantalla Completa (Full Viewport) ─────────────
+       Ocupa el 100% de la ventana de forma absoluta y fija.
+       flex + column: cabecera arriba, lista en el medio, footer abajo.
+    ──────────────────────────────────────────────────────────────────── */
     .caja-mecha-premium {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      z-index: 9999 !important;
+      position:       fixed  !important;
+      top:            0      !important;
+      left:           0      !important;
+      width:          100vw  !important;
+      height:         100vh  !important;
+      margin:         0      !important;
+      padding:        0      !important;
+      max-width:      none   !important;
+      border-radius:  0      !important;
+      overflow:       hidden !important;
+      z-index:        9999   !important;
+      box-shadow:     none   !important;
+
+      /* Estructura columnar: cabecera fija + lista scrollable + footer fijo */
+      display:        flex            !important;
+      flex-direction: column          !important;
     }
 
+    /* ─── Web Component: ocupa todo el contenedor ───────────────────── */
     df-messenger {
+      position: absolute !important;
+      inset: 0           !important;
+      width:  100%       !important;
+      height: 100%       !important;
+
+      /* Forzar también la estructura de columna internamente */
+      display:        flex   !important;
+      flex-direction: column !important;
+      overflow:       hidden !important;
+
+      /* Dimensiones internas del panel del chat */
+      --df-messenger-chat-window-width:  100% !important;
+      --df-messenger-chat-window-height: 100% !important;
+
+      /* Transparency del wrapper (oculta el background del launcher) */
+      --df-messenger-shadow-wrapper-background: transparent;
+
+      /* Color de marca — controla cabecera, chips y acentos */
+      --df-messenger-brand-color:                    #8E44AD;
+
+      /* Cabecera */
+      --df-messenger-titlebar-background:            #8E44AD;
+      --df-messenger-titlebar-font-color:            #ffffff;
+      --df-messenger-titlebar-icon-color:            #ffffff;
+
+      /* Burbujas del bot (lila suave, texto oscuro) */
+      --df-messenger-message-bot-background:         #f0e5fc;
+      --df-messenger-message-bot-font-color:         #2d0052;
+
+      /* Burbujas del usuario (violeta, texto blanco) */
+      --df-messenger-message-user-background:        #8E44AD;
+      --df-messenger-message-user-font-color:        #ffffff;
+
+      /* Fondo del área de mensajes */
+      --df-messenger-chat-background-color:          #faf5ff;
+
+      /* Barra de entrada de texto */
+      --df-messenger-input-box-color:                #f3e8ff;
+      --df-messenger-input-font-color:               #2d0052;
+      --df-messenger-input-placeholder-font-color:   #9b7bb8;
+
+      /* Botón de enviar */
+      --df-messenger-send-icon:                      #8E44AD;
+
+      /* Chips / sugerencias rápidas */
+      --df-messenger-button-background:              #f0e5fc;
+      --df-messenger-button-font-color:              #6C2D9E;
+      --df-messenger-button-border:                  1px solid #8E44AD;
+
+      /* Tipografía */
+      --df-messenger-font-color:                     #2d0052;
+      --df-messenger-font-family:                    'Segoe UI', Arial, sans-serif;
+    }
+
+    /* ─── Estilo para ocultar el botón disparador nativo ─────────────── */
+    df-messenger >>> .df-messenger-wrapper button#widgetIcon,
+    df-messenger::part(launcher),
+    df-messenger-chat-bubble,
+    df-messenger::part(chat-bubble) {
+      display:        none    !important;
+      visibility:     hidden  !important;
+      opacity:        0       !important;
+      pointer-events: none    !important;
+      width:          0       !important;
+      height:         0       !important;
+      overflow:       hidden  !important;
+    }
+
+    /* ─── Asegurar que el input de texto ocupe todo el ancho inferior ─ */
+    df-messenger >>> df-messenger-user-input,
+    df-messenger-user-input::part(input) {
+      width: 100% !important;
+      max-width: none !important;
+    }
+    
+    df-messenger-chat {
       width: 100% !important;
       height: 100% !important;
-      --df-messenger-button-titlebar-color: #8E24AA;
+    }
+    
+    /* ─── Saltos de línea para el texto (Ajuste sin tocar JS) ────────── */
+    df-messenger >>> .message, 
+    df-messenger >>> div.message, 
+    df-messenger >>> .text-message, 
+    df-messenger >>> df-message, 
+    df-messenger::part(message),
+    df-messenger >>> .message-text,
+    df-messenger >>> df-message-bubble,
+    df-messenger >>> .df-message-bubble-content {
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+    }
+
+    /* ─── (1) Centrado estricto y envoltura de texto en los chips ─────
+       Usa las pseudoclases nativas expuestas por Google (::part) para
+       llegar a los chips desde fuera del Shadow DOM sin necesitar JS.
+    ──────────────────────────────────────────────────────────────────── */
+    df-messenger::part(chips) {
+      display:         flex   !important;
+      flex-wrap:       wrap   !important;
+      justify-content: center !important;
+      align-items:     center !important;
+      text-align:      center !important;
+    }
+
+    df-messenger::part(chip) {
+      display:         flex   !important;
+      justify-content: center !important;
+      align-items:     center !important;
+      text-align:      center !important;
+      white-space:     normal      !important;
+      word-break:      break-word  !important;
+      max-width:       95%         !important;
+      margin:          4px         !important;
+    }
+
+    /* ─── (2) Bloqueo de desplazamiento horizontal ────────────────────
+       Aísla el ancho de los contenedores de mensajes para que los chips
+       dinámicos nunca generen scrollbar horizontal ni muevan el marco.
+    ──────────────────────────────────────────────────────────────────── */
+    df-messenger::part(list),
+    df-messenger::part(chat) {
+      overflow-x: hidden !important;
+      width:      100%   !important;
+      max-width:  100%   !important;
+    }
+
+    /* ─── MEDIA QUERIES (Opcional, ya que es Full Screen por defecto) ── */
+
+    @media (max-width: 480px) {
+      .caja-mecha-premium {
+        height: 100dvh !important; /* Ajuste para barras móviles */
+      }
     }
   </style>
 </head>
 <body>
 
   <div class="caja-mecha-premium">
+    <!--
+      inline style repite las variables críticas para máxima especificidad.
+      expand="true" = chat abierto desde el inicio, sin click previo.
+    -->
     <df-messenger
       intent="WELCOME"
       chat-title="Mecha"
       agent-id="e0dbe63b-3c93-40ad-9c32-efd39b5f4fc3"
       language-code="es"
-      expand="true">
+      expand="true"
+      style="
+        --df-messenger-brand-color: #8E44AD;
+        --df-messenger-chat-window-width: 100% !important;
+        --df-messenger-chat-window-height: 100% !important;
+        --df-messenger-shadow-wrapper-background: transparent;
+      ">
     </df-messenger>
   </div>
 
   <script>
-    function inyectarCSS(root, id, css) {
-      if (!root || root.querySelector('#' + id)) return;
-      var style = document.createElement('style');
-      style.id = id;
-      style.textContent = css;
-      try { root.appendChild(style); } catch (e) {}
+    /* ══════════════════════════════════════════════════════════════════
+       PALETA
+    ══════════════════════════════════════════════════════════════════ */
+    var V = { violeta: '#8E44AD', blanco: '#ffffff' };
+
+    /* ══════════════════════════════════════════════════════════════════
+       CSS QUE SE INYECTA EN CADA NIVEL DEL SHADOW DOM
+
+       Dialogflow anida hasta 3 Shadow Roots:
+         df-messenger (N1)
+           └── df-messenger-chat (N2)
+                 └── df-messenger-titlebar (N3)
+    ══════════════════════════════════════════════════════════════════ */
+    function generarCSS() {
+      return [
+        /* Variables en el host — heredadas por todos sus hijos */
+        ':host {',
+        '  --df-messenger-brand-color: '              + V.violeta + ' !important;',
+        '  --df-messenger-titlebar-background: '      + V.violeta + ' !important;',
+        '  --df-messenger-titlebar-font-color: '      + V.blanco  + ' !important;',
+        '  --df-messenger-chat-window-width: 100%   !important;',
+        '  --df-messenger-chat-window-height: 100%  !important;',
+        '}',
+
+        /* ── Forzar ancho 100% en todos los wrappers internos ───────── */
+        '.df-messenger-wrapper,',
+        '.chat-wrapper,',
+        '.chat-window,',
+        '.messenger-container,',
+        'df-messenger-chat {',
+        '  width:      100% !important;',
+        '  max-width:  none !important;',
+        '  min-width:  0    !important;',
+        '  height:     100% !important;',
+        '  max-height: none !important;',
+        '  position:   relative !important;',
+        '  box-shadow: none     !important;',
+        '  left:       0        !important;',
+        '  right:      0        !important;',
+        '  bottom:     auto     !important;',
+        '}',
+
+        /* ── Respetar saltos de línea en burbujas ────────────────────── */
+        '.message, div.message, .text-message, df-message, [part="message"] {',
+        '  white-space: pre-wrap !important;',
+        '}',
+
+        /* ── Titlebar violeta ────────────────────────────────────────── */
+        'df-messenger-titlebar,',
+        '[part="titlebar"],',
+        '.df-messenger-titlebar,',
+        '.title-wrapper,',
+        '.header {',
+        '  background:       ' + V.violeta + ' !important;',
+        '  background-color: ' + V.violeta + ' !important;',
+        '}',
+        '.title, [part="title"], df-messenger-titlebar span, h1, h2, .agent-name {',
+        '  color: ' + V.blanco + ' !important;',
+        '}',
+        'df-messenger-titlebar svg path, [part="close-icon"], .material-icons {',
+        '  fill:  ' + V.blanco + ' !important;',
+        '  color: ' + V.blanco + ' !important;',
+        '}',
+
+        /* ── Barra de entrada: ocupa todo el ancho disponible ────────── */
+        'df-messenger-input-box,',
+        '.input-box-wrapper,',
+        'input[type="text"],',
+        'textarea,',
+        'df-messenger-user-input {',
+        '  width:     100% !important;',
+        '  max-width: none !important;',
+        '}',
+
+        /* ── Ocultar launcher FAB — todos los selectores conocidos ───── */
+        'df-messenger-chat-bubble,',
+        '[part="chat-bubble"],',
+        '[part="launcher"],',
+        'button#widgetIcon,',
+        'button.df-messenger-chat-bubble,',
+        '.df-messenger-chat-bubble,',
+        'df-messenger-button,',
+        'button[class*="bubble"],',
+        'button[class*="launcher"],',
+        'button[class*="widget"] {',
+        '  display:        none    !important;',
+        '  visibility:     hidden  !important;',
+        '  opacity:        0       !important;',
+        '  pointer-events: none    !important;',
+        '  width:          0       !important;',
+        '  height:         0       !important;',
+        '  overflow:       hidden  !important;',
+        '}'
+      ].join('\n');
     }
 
-    function fijarEstructuraEspecifica() {
+    /* ── Inyectar <style> en un Shadow Root sin duplicar ─────────── */
+    function inyectar(root, id) {
+      if (!root) return;
+      if (root.querySelector && root.querySelector('#' + id)) return;
+      var el = document.createElement('style');
+      el.id = id;
+      el.textContent = generarCSS();
+      try { root.appendChild(el); } catch (e) {}
+    }
+
+    /* ── Perforar los niveles del Shadow DOM para inyectar CSS ───── */
+    function aplicarEstilos() {
+      var df = document.querySelector('df-messenger');
+      if (!df) return;
+
+      inyectar(df.shadowRoot, 'mecha-n1');
+      if (!df.shadowRoot) return;
+
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (dfChat) {
+        inyectar(dfChat.shadowRoot, 'mecha-n2');
+
+        if (!dfChat.shadowRoot) return;
+
+        var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
+        if (dfTitle) {
+          inyectar(dfTitle.shadowRoot, 'mecha-n3');
+          try {
+            dfTitle.style.setProperty('background',       V.violeta, 'important');
+            dfTitle.style.setProperty('background-color', V.violeta, 'important');
+          } catch (e) {}
+        }
+        
+        var dfInput = dfChat.shadowRoot.querySelector('df-messenger-user-input');
+        if (dfInput) {
+          inyectar(dfInput.shadowRoot, 'mecha-n4');
+        }
+      }
+    }
+
+    /* ── Ocultar launcher con querySelectorAll en todos los niveles ─ */
+    function ocultarLauncher() {
+      var df = document.querySelector('df-messenger');
+      if (!df) return;
+
+      var sels = [
+        'df-messenger-chat-bubble',
+        '[part="chat-bubble"]',
+        '[part="launcher"]',
+        'button#widgetIcon',
+        '.df-messenger-chat-bubble',
+        'df-messenger-button',
+        'button[class*="bubble"]',
+        'button[class*="launcher"]',
+        'button[class*="widget"]'
+      ];
+
+      [document, df, df.shadowRoot].forEach(function (root) {
+        if (!root || !root.querySelectorAll) return;
+        sels.forEach(function (sel) {
+          try {
+            root.querySelectorAll(sel).forEach(function (el) {
+              el.style.cssText =
+                'display:none!important;visibility:hidden!important;' +
+                'opacity:0!important;pointer-events:none!important;' +
+                'width:0!important;height:0!important;overflow:hidden!important;';
+            });
+          } catch (e) {}
+        });
+      });
+    }
+
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       MUTATIONOBSERVER
+       El launcher y los mensajes pueden ser insertados dinámicamente.
+       Este observer los intercepta y oculta en tiempo real, sin importar
+       cuándo los agregue Dialogflow.
+    ══════════════════════════════════════════════════════════════════ */
+    function iniciarObserver() {
+      var observer = new MutationObserver(function (mutations) {
+        var hayNuevos = mutations.some(function (m) {
+          return m.addedNodes.length > 0;
+        });
+        if (hayNuevos) {
+          ocultarLauncher();
+          aplicarEstilos();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    /* ── Eventos oficiales de inicialización ─────────────────────────── */
+    window.addEventListener('dfMessengerLoaded', function () {
+      aplicarEstilos();
+      ocultarLauncher();
+      inyectarEnTodosLosNiveles();
+    });
+
+    /* ── Fallbacks escalonados (por si dfMessengerLoaded no dispara) ─ */
+    [200, 600, 1200, 2500, 4000].forEach(function (ms) {
+      setTimeout(function () {
+        aplicarEstilos();
+        ocultarLauncher();
+        inyectarEnTodosLosNiveles();
+      }, ms);
+    });
+
+    /* ── Iniciar observer inmediatamente ─────────────────────────── */
+    iniciarObserver();
+
+    /* ── Re-inyectar en burbujas nuevas desde el MutationObserver ─────── */
+    /* El observer ya está activo; esta llamada cubre el arranque inicial. */
+    inyectarEnTodosLosNiveles();
+
+    /* ══════════════════════════════════════════════════════════════════
+       INYECCIÓN PROFUNDA: SALTOS DE LÍNEA + PROTECCIÓN DEL FOOTER
+       Estrategia de tres capas:
+         1. Selector universal * en df-messenger-chat (cubre dinámicos)
+         2. Perforación recursiva hasta df-message-list y df-message-bubble
+         3. MutationObserver re-inyecta en cada burbuja nueva
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* CSS con selector universal — se aplica a TODO dentro del shadow root,
+       incluyendo elementos creados dinámicamente por Dialogflow */
+    var CSS_LINEBREAKS = [
+      /* ── Reset de caja dentro del Shadow DOM (punto 2 de la directiva) */
+      '*, *::before, *::after {',
+      '  box-sizing: border-box !important;',
+      '}',
+
+      /* ── (1) Chips: centrado estricto + envoltura sin deformación ──
+         NOTA: ya NO se usa "* { word-break: break-word }" universal,
+         porque desarticulaba el Flexbox nativo de los chips. Se apunta
+         directo al contenedor y al botón. ─────────────────────────── */
+      'df-chips, .df-chips, [part="chips"] {',
+      '  display:         flex   !important;',
+      '  flex-wrap:       wrap   !important;',
+      '  justify-content: center !important;',
+      '  align-items:     center !important;',
+      '  text-align:      center !important;',
+      '  width:           100%   !important;',
+      '  max-width:       100%   !important;',
+      '}',
+      'df-chip, .df-chip, [part="chip"] {',
+      '  display:         flex   !important;',
+      '  justify-content: center !important;',
+      '  align-items:     center !important;',
+      '  text-align:      center !important;',
+      '  white-space:     normal      !important;',
+      '  word-break:      break-word  !important;',
+      '  max-width:       95%         !important;',
+      '  margin:          4px         !important;',
+      '}',
+
+      /* ── (2) Aislamiento de ancho: sin scroll horizontal ──────────── */
+      'df-message-list,',
+      '.chat-wrapper {',
+      '  overflow-x: hidden !important;',
+      '  width:      100%   !important;',
+      '  max-width:  100%   !important;',
+      '}',
+
+      /* ── Selectores específicos para burbujas y texto ────────────── */
+      '.message-text,',
+      'df-message-bubble,',
+      '.df-message-bubble-content,',
+      '.message, div.message,',
+      '.text-message, df-message,',
+      '[part="message"],',
+      '.bot-message, .bot-message p,',
+      '.response-text, span, p {',
+      '  white-space: pre-wrap !important;',
+      '  line-height: 1.5      !important;',
+      '}',
+
+      /* ── Cabecera (titlebar): inamovible, no se comprime ─────────── */
+      'df-messenger-titlebar,',
+      '[part="titlebar"],',
+      '.df-messenger-titlebar,',
+      '.title-wrapper,',
+      '.header {',
+      '  flex-shrink: 0 !important;',
+      '  height:       auto !important;',
+      '  min-height:   44px !important;',
+      '}',
+
+      /* ── Lista de mensajes: ocupa el espacio sobrante, scroll propio ─ */
+      '#messageList,',
+      'df-message-list,',
+      '.message-list, .chat-body,',
+      '.messages-container {',
+      '  flex:         1 1 auto !important;',
+      '  overflow-y:   auto     !important;',
+      '  height:       100%     !important;',
+      '  max-height:   100%     !important;',
+      '}',
+
+      /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
+      'df-messenger-user-input,',
+      '.input-area,',
+      '.user-input-container {',
+      '  flex-shrink: 0    !important;',
+      '  height:      auto !important;',
+      '  min-height:  60px !important;',
+      '  width:       100% !important;',
+      '}'
+    ].join('\n');
+
+    /* ── Inyecta el CSS en un Shadow Root usando un ID para no duplicar ─ */
+    function inyectarLinebreaks(shadowRoot, id) {
+      if (!shadowRoot) return;
+      if (shadowRoot.querySelector && shadowRoot.querySelector('#' + id)) return;
+      var s = document.createElement('style');
+      s.id = id;
+      s.textContent = CSS_LINEBREAKS;
+      try { shadowRoot.appendChild(s); } catch (e) {}
+    }
+
+    /* ── Perfora recursivamente todos los shadow roots conocidos ──────── */
+    function inyectarEnTodosLosNiveles() {
       var df = document.querySelector('df-messenger');
       if (!df || !df.shadowRoot) return;
 
-      // Nivel 1: Forzar ventana a pantalla completa y ocultar launcher flotante
-      inyectarCSS(df.shadowRoot, 'fix-nivel-1', [
-        'df-messenger-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; max-height: 100vh !important; border-radius: 0 !important; }',
-        'df-messenger-chat-bubble, #widgetIcon, button.chat-bubble { display: none !important; opacity: 0 !important; pointer-events: none !important; }'
-      ].join('\n'));
+      /* N1 — df-messenger */
+      inyectarLinebreaks(df.shadowRoot, 'lb-n1');
 
-      // Nivel 2: Expandir contenedor interno del chat y fijar encabezado violeta
+      /* N2 — df-messenger-chat */
       var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
       if (!dfChat || !dfChat.shadowRoot) return;
+      inyectarLinebreaks(dfChat.shadowRoot, 'lb-n2');
 
-      inyectarCSS(dfChat.shadowRoot, 'fix-nivel-2', [
-        '.chat-wrapper, .chat-window, .wrapper { width: 100% !important; height: 100% !important; max-height: 100% !important; border-radius: 0 !important; box-shadow: none !important; }',
-        'df-messenger-titlebar { background-color: #8E24AA !important; }',
-        'df-message-list { flex: 1 1 auto !important; height: 100% !important; }'
-      ].join('\n'));
-
-      // Nivel 3: Formato de saltos de línea y centrado de botones (sin alterar burbujas de texto)
+      /* N2b — df-message-list (hermano dentro de df-messenger-chat) */
       var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
-      if (!dfMsgList || !dfMsgList.shadowRoot) return;
+      if (dfMsgList && dfMsgList.shadowRoot) {
+        inyectarLinebreaks(dfMsgList.shadowRoot, 'lb-msglist');
 
-      inyectarCSS(dfMsgList.shadowRoot, 'fix-nivel-3', [
-        '.message { white-space: pre-wrap !important; word-break: break-word !important; }',
-        'df-chips, .df-chips-wrapper { display: flex !important; justify-content: center !important; flex-wrap: wrap !important; width: 100% !important; margin: 8px 0 !important; }'
-      ].join('\n'));
+        /* N3 — df-message-bubble: una por cada respuesta del bot */
+        dfMsgList.shadowRoot.querySelectorAll('df-message-bubble').forEach(function (bubble, i) {
+          if (bubble.shadowRoot) {
+            inyectarLinebreaks(bubble.shadowRoot, 'lb-bubble-' + i);
+          }
+        });
+      }
+
+      /* N3 — df-messenger-titlebar */
+      var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
+      if (dfTitle && dfTitle.shadowRoot) {
+        inyectarLinebreaks(dfTitle.shadowRoot, 'lb-title');
+      }
     }
 
-    // Ejecución controlada tras la carga del componente
-    window.addEventListener('dfMessengerLoaded', fijarEstructuraEspecifica);
-    
-    var observer = new MutationObserver(fijarEstructuraEspecifica);
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    [200, 600, 1500, 3000].forEach(function(ms) {
-      setTimeout(fijarEstructuraEspecifica, ms);
-    });
+    /* inyectarEnTodosLosNiveles() ya se llama desde dfMessengerLoaded,
+       los fallbacks y el arranque inicial. El MutationObserver la
+       re-ejecuta automáticamente a través de aplicarEstilos(). */
   </script>
 
 </body>
