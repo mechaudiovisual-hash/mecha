@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mecha - Asistente Virtual</title>
 
-  <!-- Script oficial de Dialogflow ES Messenger (CDN Google, sin XSS) -->
+  <!-- Script oficial de Dialogflow ES Messenger (CDN Google) -->
   <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
 
   <style>
-    /* --- Reset base -------------------------------------------------- */
+    /* Reset base */
     *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
@@ -25,7 +25,7 @@
       overflow: hidden;
     }
 
-    /* --- Marco Global ------------------------------------------------- */
+    /* Marco Global - Pantalla Completa Absoluta */
     .caja-mecha-premium {
       position:        fixed   !important;
       top:             0       !important;
@@ -45,53 +45,39 @@
       align-items:     center  !important;
     }
 
-    /* 1. BLINDAJE DE LA VENTANA */
-    df-messenger {
-      --df-messenger-chat-window-height: 520px !important;
-      --df-messenger-chat-window-width: 370px !important;
+    /* Reglas Shadow Parts Nativas (Nivel Nivel Superior) */
+    df-messenger,
+    df-messenger ::part(chat-window),
+    df-messenger-chat {
+      width:      100% !important;
+      max-width:  100% !important;
+      height:     100% !important;
+      max-height: 100% !important;
+      --df-messenger-chat-window-width:  100% !important;
+      --df-messenger-chat-window-height: 100% !important;
       --df-messenger-button-titlebar-color: #8E24AA !important;
       font-family: Roboto, sans-serif !important;
       line-height: normal !important;
     }
 
-    /* 2. SCROLL INTERNO DE MENSAJES */
     df-messenger ::part(message-list) {
-      max-height: 420px !important;
+      flex:       1 1 auto !important;
+      height:     100% !important;
+      max-height: none !important;
       overflow-y: auto !important;
-      box-sizing: border-box !important;
+      overflow-x: hidden !important;
     }
 
-    /* 3. CHIPS - CENTRADO Y GEOMETRIA */
-    df-messenger ::part(chip) {
-      display:          inline-flex !important;
-      align-items:      center !important;
-      justify-content:  center !important;
-      height:           36px !important;
-      line-height:      1 !important;
-      padding:          0 14px !important;
-      margin:           4px !important;
-      box-sizing:       border-box !important;
-      vertical-align:   middle !important;
-      background-color: #ffffff !important;
-      border:           1px solid #dcdcdc !important;
+    df-messenger ::part(chips-wrapper),
+    df-messenger ::part(chips) {
+      display:         flex !important;
+      justify-content: center !important;
+      align-items:     center !important;
+      flex-wrap:       wrap !important;
+      width:           100% !important;
+      margin:          8px 0 !important;
     }
 
-    /* 4. TEXTO DEL CHIP */
-    df-messenger ::part(chip-text) {
-      line-height:    1 !important;
-      font-size:      14px !important;
-      display:        inline-block !important;
-      vertical-align: middle !important;
-    }
-
-    /* 5. ICONO DEL CHIP */
-    df-messenger ::part(chip-icon) {
-      margin-left: 6px !important;
-      display:     inline-flex !important;
-      align-items: center !important;
-    }
-
-    /* --- Ocultar launcher nativo -------------------------------------- */
     df-messenger::part(launcher),
     df-messenger-chat-bubble,
     df-messenger::part(chat-bubble) {
@@ -104,7 +90,6 @@
       overflow:       hidden  !important;
     }
 
-    /* --- Saltos de linea --------------------------------------------- */
     df-messenger::part(message) {
       white-space: pre-wrap !important;
       word-break:  break-word !important;
@@ -124,336 +109,150 @@
   </div>
 
   <script>
-    /* ================================================================
-       PALETA
-    ================================================================ */
-    var V = { violeta: '#8E24AA', blanco: '#ffffff' };
+    (function () {
+      var COLOR_VIOLETA = '#8E24AA';
 
-    /* ================================================================
-       CSS INYECTADO EN CADA NIVEL DEL SHADOW DOM
-    ================================================================ */
-    function generarCSS() {
-      return [
+      /* Hoja de estilo maestra inyectada recursivamente en cada Shadow Root */
+      var MASTER_CSS = [
         ':host {',
-        '  --df-messenger-brand-color: #8E24AA !important;',
-        '  --df-messenger-button-titlebar-color: #8E24AA !important;',
-        '  --df-messenger-chat-window-width: 370px !important;',
-        '  --df-messenger-chat-window-height: 520px !important;',
+        '  --df-messenger-brand-color: ' + COLOR_VIOLETA + ' !important;',
+        '  --df-messenger-button-titlebar-color: ' + COLOR_VIOLETA + ' !important;',
+        '  --df-messenger-chat-window-width: 100% !important;',
+        '  --df-messenger-chat-window-height: 100% !important;',
         '  font-family: Roboto, sans-serif !important;',
-        '  line-height: normal !important;',
         '}',
 
-        '.df-messenger-wrapper,',
-        '.chat-wrapper,',
-        '.chat-window,',
-        '.messenger-container,',
-        'df-messenger-chat {',
-        '  width:      370px !important;',
-        '  max-width:  370px !important;',
-        '  height:     520px !important;',
-        '  max-height: 520px !important;',
-        '  position:   relative !important;',
+        /* 1. Fluidez de altura y ancho sin límites fijos */
+        '.df-messenger-wrapper, .chat-wrapper, .chat-window, .messenger-container, df-messenger-chat {',
+        '  width: 100% !important;',
+        '  max-width: 100% !important;',
+        '  height: 100% !important;',
+        '  max-height: none !important;',
+        '  position: relative !important;',
         '  box-shadow: none !important;',
         '}',
 
-        '[part="message-list"],',
-        '#messageList,',
-        'df-message-list,',
-        '.message-list,',
-        '.chat-body,',
-        '.messages-container {',
-        '  max-height: 420px !important;',
+        /* 2. Área de mensajes con scroll responsivo */
+        '[part="message-list"], #messageList, df-message-list, .message-list, .chat-body, .messages-container {',
+        '  flex: 1 1 auto !important;',
+        '  height: 100% !important;',
+        '  max-height: none !important;',
         '  overflow-y: auto !important;',
+        '  overflow-x: hidden !important;',
         '  box-sizing: border-box !important;',
         '}',
 
-        '.message, div.message, .text-message, df-message, [part="message"] {',
+        /* 3. Respeto de saltos de línea */
+        '* { word-break: break-word !important; }',
+        '.message-text, df-message-bubble, .df-message-bubble-content,',
+        '.message, div.message, .text-message, df-message, [part="message"],',
+        '.bot-message, .bot-message p, .response-text, p {',
         '  white-space: pre-wrap !important;',
+        '  line-height: 1.5 !important;',
         '}',
 
-        'df-messenger-titlebar,',
-        '[part="titlebar"],',
-        '.df-messenger-titlebar,',
-        '.title-wrapper,',
-        '.header {',
-        '  background:       #8E24AA !important;',
-        '  background-color: #8E24AA !important;',
+        /* 4. Encabezado e Input */
+        'df-messenger-titlebar, [part="titlebar"], .df-messenger-titlebar, .header {',
+        '  background-color: ' + COLOR_VIOLETA + ' !important;',
+        '  flex-shrink: 0 !important;',
         '}',
-        '.title, [part="title"], df-messenger-titlebar span, h1, h2, .agent-name {',
-        '  color: #ffffff !important;',
-        '}',
-        'df-messenger-titlebar svg path, [part="close-icon"] {',
-        '  fill:  #ffffff !important;',
-        '  color: #ffffff !important;',
+        '.title, [part="title"], df-messenger-titlebar span, .agent-name { color: #ffffff !important; }',
+        'df-messenger-user-input, .input-area { flex-shrink: 0 !important; width: 100% !important; }',
+
+        /* 5. Centrado estricto de botones (Chips/Cards) */
+        'df-chips, .df-chips, .chips-wrapper, [part="chips"], [part="chips-wrapper"], .df-chips-container {',
+        '  display: flex !important;',
+        '  justify-content: center !important;',
+        '  align-items: center !important;',
+        '  flex-wrap: wrap !important;',
+        '  width: 100% !important;',
+        '  margin: 10px auto !important;',
+        '  box-sizing: border-box !important;',
         '}',
 
-        'df-messenger-input-box,',
-        '.input-box-wrapper,',
-        'input[type="text"],',
-        'textarea,',
-        'df-messenger-user-input {',
-        '  width:     100% !important;',
-        '  max-width: none !important;',
-        '}',
-
-        '[part="chip"],',
-        'df-chip,',
-        '.df-chip,',
-        '.chip,',
-        'df-messenger-button,',
-        'button.df-messenger-button,',
-        '.df-messenger-button,',
-        'df-button,',
-        '.df-button,',
-        'a.df-button {',
-        '  display:          inline-flex !important;',
-        '  align-items:      center !important;',
-        '  justify-content:  center !important;',
-        '  height:           36px !important;',
-        '  line-height:      1 !important;',
-        '  padding:          0 14px !important;',
-        '  margin:           4px !important;',
-        '  box-sizing:       border-box !important;',
-        '  vertical-align:   middle !important;',
+        '[part="chip"], df-chip, .df-chip, .chip, df-messenger-button,',
+        'button.df-messenger-button, .df-messenger-button, df-button, .df-button, a.df-button {',
+        '  display: inline-flex !important;',
+        '  align-items: center !important;',
+        '  justify-content: center !important;',
+        '  height: 38px !important;',
+        '  line-height: 1 !important;',
+        '  padding: 0 16px !important;',
+        '  margin: 5px 4px !important;',
+        '  box-sizing: border-box !important;',
         '  background-color: #ffffff !important;',
-        '  border:           1px solid #dcdcdc !important;',
-        '  border-radius:    18px !important;',
-        '  text-decoration:  none !important;',
-        '  cursor:           pointer !important;',
+        '  border: 1px solid #dcdcdc !important;',
+        '  border-radius: 18px !important;',
+        '  text-decoration: none !important;',
+        '  cursor: pointer !important;',
+        '  text-align: center !important;',
         '}',
 
-        '[part="chip-text"],',
-        '.df-chip-text,',
-        '.chip-text,',
-        '[part="chip"] span,',
-        'df-chip span,',
-        'df-button span,',
-        'df-messenger-button span {',
-        '  line-height:    1 !important;',
-        '  font-size:      14px !important;',
-        '  display:        inline-block !important;',
-        '  vertical-align: middle !important;',
+        '[part="chip-text"], .df-chip-text, .chip-text, [part="chip"] span, df-chip span, df-button span {',
+        '  font-size: 14px !important;',
+        '  line-height: 1 !important;',
+        '  text-align: center !important;',
         '}',
 
-        '[part="chip-icon"],',
-        '.df-chip-icon,',
-        '.chip-icon,',
-        '[part="chip"] svg,',
-        'df-chip svg,',
-        'df-button svg,',
-        'df-messenger-button svg {',
-        '  margin-left:    6px !important;',
-        '  display:        inline-flex !important;',
-        '  align-items:    center !important;',
-        '  vertical-align: middle !important;',
-        '}',
-
-        'df-messenger-chat-bubble,',
-        '[part="chat-bubble"],',
-        '[part="launcher"],',
-        'button#widgetIcon,',
-        'button.df-messenger-chat-bubble,',
-        '.df-messenger-chat-bubble,',
-        'button[class*="bubble"],',
-        'button[class*="launcher"],',
-        'button[class*="widget"] {',
-        '  display:        none !important;',
-        '  visibility:     hidden !important;',
-        '  opacity:        0 !important;',
-        '  pointer-events: none !important;',
-        '  width:          0 !important;',
-        '  height:         0 !important;',
-        '  overflow:       hidden !important;',
+        /* 6. Ocultar elemento flotante/launcher */
+        'df-messenger-chat-bubble, [part="chat-bubble"], [part="launcher"], button#widgetIcon {',
+        '  display: none !important; opacity: 0 !important; visibility: hidden !important; width: 0 !important; height: 0 !important;',
         '}'
       ].join('\n');
-    }
 
-    function inyectar(root, id) {
-      if (!root) return;
-      if (root.querySelector && root.querySelector('#' + id)) return;
-      var el = document.createElement('style');
-      el.id = id;
-      el.textContent = generarCSS();
-      try { root.appendChild(el); } catch (e) {}
-    }
-
-    function aplicarEstilos() {
-      var df = document.querySelector('df-messenger');
-      if (!df) return;
-      inyectar(df.shadowRoot, 'mecha-n1');
-      if (!df.shadowRoot) return;
-      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
-      if (dfChat) {
-        inyectar(dfChat.shadowRoot, 'mecha-n2');
-        if (!dfChat.shadowRoot) return;
-        var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
-        if (dfTitle) {
-          inyectar(dfTitle.shadowRoot, 'mecha-n3');
-          try {
-            dfTitle.style.setProperty('background',       V.violeta, 'important');
-            dfTitle.style.setProperty('background-color', V.violeta, 'important');
-          } catch (e) {}
+      function inyectarEnRoot(targetRoot) {
+        if (!targetRoot) return;
+        var styleId = 'mecha-style-fix';
+        if (!targetRoot.querySelector || !targetRoot.querySelector('#' + styleId)) {
+          var style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = MASTER_CSS;
+          try { targetRoot.appendChild(style); } catch (e) {}
         }
-        var dfInput = dfChat.shadowRoot.querySelector('df-messenger-user-input');
-        if (dfInput) { inyectar(dfInput.shadowRoot, 'mecha-n4'); }
       }
-    }
 
-    function ocultarLauncher() {
-      var df = document.querySelector('df-messenger');
-      if (!df) return;
-      var sels = [
-        'df-messenger-chat-bubble', '[part="chat-bubble"]', '[part="launcher"]',
-        'button#widgetIcon', '.df-messenger-chat-bubble',
-        'button[class*="bubble"]', 'button[class*="launcher"]', 'button[class*="widget"]'
-      ];
-      [document, df, df.shadowRoot].forEach(function (root) {
-        if (!root || !root.querySelectorAll) return;
-        sels.forEach(function (sel) {
-          try {
-            root.querySelectorAll(sel).forEach(function (el) {
-              el.style.cssText =
-                'display:none!important;visibility:hidden!important;' +
-                'opacity:0!important;pointer-events:none!important;' +
-                'width:0!important;height:0!important;overflow:hidden!important;';
+      var rootsObservados = new WeakSet();
+
+      /* Recorre todo el árbol de elementos y Shadow DOMs anidados */
+      function auditarYAplicar(node) {
+        if (!node) return;
+
+        if (node.shadowRoot) {
+          inyectarEnRoot(node.shadowRoot);
+
+          /* Si se crean nuevos elementos dentro de este Shadow Root, re-audita inmediatamente */
+          if (!rootsObservados.has(node.shadowRoot)) {
+            rootsObservados.add(node.shadowRoot);
+            var obs = new MutationObserver(function () {
+              auditarYAplicar(node);
             });
-          } catch (e) {}
-        });
-      });
-    }
+            obs.observe(node.shadowRoot, { childList: true, subtree: true });
+          }
 
-    /* ================================================================
-       CSS PROFUNDO PARA SALTOS DE LINEA + CHIPS (inyectado en todos
-       los shadow roots via inyectarEnTodosLosNiveles)
-    ================================================================ */
-    var CSS_LINEBREAKS = [
-      '* { word-break: break-word !important; }',
-
-      '.message-text, df-message-bubble, .df-message-bubble-content,',
-      '.message, div.message, .text-message, df-message,',
-      '[part="message"], .bot-message, .bot-message p, .response-text, p {',
-      '  white-space: pre-wrap !important;',
-      '  line-height: 1.5 !important;',
-      '}',
-
-      'df-messenger-titlebar, [part="titlebar"], .df-messenger-titlebar,',
-      '.title-wrapper, .header {',
-      '  flex-shrink: 0 !important;',
-      '  height: auto !important;',
-      '  min-height: 44px !important;',
-      '}',
-
-      '[part="message-list"], #messageList, df-message-list,',
-      '.message-list, .chat-body, .messages-container {',
-      '  max-height: 420px !important;',
-      '  overflow-y: auto !important;',
-      '  overflow-x: hidden !important;',
-      '  box-sizing: border-box !important;',
-      '}',
-
-      '[part="chip"], df-chip, .df-chip, .chip,',
-      'df-messenger-button, button.df-messenger-button,',
-      '.df-messenger-button, df-button, .df-button, a.df-button {',
-      '  display: inline-flex !important;',
-      '  align-items: center !important;',
-      '  justify-content: center !important;',
-      '  height: 36px !important;',
-      '  line-height: 1 !important;',
-      '  padding: 0 14px !important;',
-      '  margin: 4px !important;',
-      '  box-sizing: border-box !important;',
-      '  vertical-align: middle !important;',
-      '  background-color: #ffffff !important;',
-      '  border: 1px solid #dcdcdc !important;',
-      '  border-radius: 18px !important;',
-      '  text-decoration: none !important;',
-      '  cursor: pointer !important;',
-      '}',
-
-      '[part="chip-text"], .df-chip-text, .chip-text,',
-      '[part="chip"] span, df-chip span, df-button span, df-messenger-button span {',
-      '  line-height: 1 !important;',
-      '  font-size: 14px !important;',
-      '  display: inline-block !important;',
-      '  vertical-align: middle !important;',
-      '}',
-
-      '[part="chip-icon"], .df-chip-icon, .chip-icon,',
-      '[part="chip"] svg, df-chip svg, df-button svg, df-messenger-button svg {',
-      '  margin-left: 6px !important;',
-      '  display: inline-flex !important;',
-      '  align-items: center !important;',
-      '  vertical-align: middle !important;',
-      '}',
-
-      'df-messenger-user-input, .input-area, .user-input-container {',
-      '  flex-shrink: 0 !important;',
-      '  height: auto !important;',
-      '  min-height: 60px !important;',
-      '  width: 100% !important;',
-      '}'
-    ].join('\n');
-
-    function inyectarLinebreaks(shadowRoot, id) {
-      if (!shadowRoot) return;
-      if (shadowRoot.querySelector && shadowRoot.querySelector('#' + id)) return;
-      var s = document.createElement('style');
-      s.id = id;
-      s.textContent = CSS_LINEBREAKS;
-      try { shadowRoot.appendChild(s); } catch (e) {}
-    }
-
-    function inyectarEnTodosLosNiveles() {
-      var df = document.querySelector('df-messenger');
-      if (!df || !df.shadowRoot) return;
-      inyectarLinebreaks(df.shadowRoot, 'lb-n1');
-      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
-      if (!dfChat || !dfChat.shadowRoot) return;
-      inyectarLinebreaks(dfChat.shadowRoot, 'lb-n2');
-      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
-      if (dfMsgList && dfMsgList.shadowRoot) {
-        inyectarLinebreaks(dfMsgList.shadowRoot, 'lb-msglist');
-        dfMsgList.shadowRoot.querySelectorAll('*').forEach(function (el, i) {
-          if (el.shadowRoot) { inyectarLinebreaks(el.shadowRoot, 'lb-sub-' + i); }
-        });
-      }
-      var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
-      if (dfTitle && dfTitle.shadowRoot) {
-        inyectarLinebreaks(dfTitle.shadowRoot, 'lb-title');
-      }
-    }
-
-    /* ================================================================
-       MUTATIONOBSERVER
-    ================================================================ */
-    function iniciarObserver() {
-      var observer = new MutationObserver(function (mutations) {
-        var hayNuevos = mutations.some(function (m) { return m.addedNodes.length > 0; });
-        if (hayNuevos) {
-          ocultarLauncher();
-          aplicarEstilos();
-          inyectarEnTodosLosNiveles();
+          Array.from(node.shadowRoot.querySelectorAll('*')).forEach(auditarYAplicar);
         }
+
+        if (node.children) {
+          Array.from(node.children).forEach(auditarYAplicar);
+        }
+      }
+
+      function ejecutarAuditoriaGlobal() {
+        var df = document.querySelector('df-messenger');
+        if (df) auditarYAplicar(df);
+      }
+
+      /* Disparadores de auditoría */
+      window.addEventListener('dfMessengerLoaded', ejecutarAuditoriaGlobal);
+      window.addEventListener('DOMContentLoaded', ejecutarAuditoriaGlobal);
+
+      var observerDocument = new MutationObserver(ejecutarAuditoriaGlobal);
+      observerDocument.observe(document.body, { childList: true, subtree: true });
+
+      [100, 300, 700, 1500, 3000].forEach(function (delay) {
+        setTimeout(ejecutarAuditoriaGlobal, delay);
       });
-      observer.observe(document.body, { childList: true, subtree: true });
-    }
-
-    window.addEventListener('dfMessengerLoaded', function () {
-      aplicarEstilos();
-      ocultarLauncher();
-      inyectarEnTodosLosNiveles();
-    });
-
-    [200, 600, 1200, 2500, 4000].forEach(function (ms) {
-      setTimeout(function () {
-        aplicarEstilos();
-        ocultarLauncher();
-        inyectarEnTodosLosNiveles();
-      }, ms);
-    });
-
-    iniciarObserver();
-    inyectarEnTodosLosNiveles();
+    })();
   </script>
 
 </body>
