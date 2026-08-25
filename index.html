@@ -233,12 +233,21 @@
         '  --df-messenger-chat-window-height: 100%  !important;',
         '}',
 
-        /* ── Forzar ancho 100% en todos los wrappers internos ───────── */
+        /* ── Forzar ancho/alto 100% Y estructura de columna en los
+               wrappers internos reales (.chat-wrapper confirmado por
+               Google como el div que Dialogflow redimensiona al abrir
+               el chat). Sin display:flex + flex-direction:column acá,
+               el "flex:1 1 auto" de la lista de mensajes no tiene
+               ningún efecto, porque esa propiedad solo funciona si el
+               padre inmediato es un contenedor flex. ─────────────── */
         '.df-messenger-wrapper,',
         '.chat-wrapper,',
         '.chat-window,',
         '.messenger-container,',
         'df-messenger-chat {',
+        '  display:          flex   !important;',
+        '  flex-direction:   column !important;',
+        '  overflow-x:       hidden !important;',
         '  width:            100% !important;',
         '  max-width:        none !important;',
         '  min-width:        0    !important;',
@@ -491,36 +500,29 @@
       '  box-sizing: border-box !important;',
       '}',
 
-      /* ── (1) Chips: centrado estricto + envoltura sin deformación ──
-         NOTA: ya NO se usa "* { word-break: break-word }" universal,
-         porque desarticulaba el Flexbox nativo de los chips. Se apunta
-         directo al contenedor y al botón. ─────────────────────────── */
-      'df-chips, .df-chips, [part="chips"] {',
-      '  display:         flex   !important;',
-      '  flex-wrap:       wrap   !important;',
-      '  justify-content: center !important;',
-      '  align-items:     center !important;',
-      '  text-align:      center !important;',
-      '  width:           100%   !important;',
-      '  max-width:       100%   !important;',
-      '}',
-      'df-chip, .df-chip, [part="chip"] {',
-      '  display:         flex   !important;',
-      '  justify-content: center !important;',
-      '  align-items:     center !important;',
-      '  text-align:      center !important;',
-      '  white-space:     normal      !important;',
-      '  word-break:      break-word  !important;',
-      '  max-width:       95%         !important;',
-      '  margin:          4px         !important;',
+      /* ── (1) Chips: centrado estricto con inline-flex ───────────
+         inline-flex (no flex) en el chip y su botón interno: así el
+         chip conserva su ancho natural según el texto en vez de
+         estirarse como bloque, mientras el flex interno centra el
+         ícono+texto. Ningún selector universal "*" para esto. ────── */
+      'df-chips, .df-chips, [part="chips"],',
+      'df-chip, .df-chip, [part="chip"],',
+      'df-chip button, df-chip a,',
+      '.df-chip button, .df-chip a,',
+      '[part="chip"] button, [part="chip"] a {',
+      '  display:         inline-flex !important;',
+      '  justify-content: center      !important;',
+      '  align-items:     center      !important;',
+      '  text-align:      center      !important;',
       '}',
 
-      /* ── (2) Aislamiento de ancho: sin scroll horizontal ──────────── */
-      'df-message-list,',
-      '.chat-wrapper {',
-      '  overflow-x: hidden !important;',
-      '  width:      100%   !important;',
-      '  max-width:  100%   !important;',
+      /* ── Envoltura de texto largo en las etiquetas internas del chip,
+         sin deformar el botón ───────────────────────────────── */
+      'df-chip, .df-chip, [part="chip"],',
+      'df-chip *, .df-chip *, [part="chip"] * {',
+      '  white-space: normal     !important;',
+      '  word-break:  break-word !important;',
+      '  max-width:   95%        !important;',
       '}',
 
       /* ── Selectores específicos para burbujas y texto ────────────── */
@@ -563,6 +565,8 @@
       '  min-height:       0        !important;',
       '  overflow-y:       auto     !important;',
       '  overflow-x:       hidden   !important;',
+      '  width:            100%     !important;',
+      '  max-width:        100%     !important;',
       '  background-color: var(--df-messenger-chat-background-color, #faf5ff) !important;',
       '}',
 
