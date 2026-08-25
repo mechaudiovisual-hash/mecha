@@ -239,16 +239,18 @@
         '.chat-window,',
         '.messenger-container,',
         'df-messenger-chat {',
-        '  width:      100% !important;',
-        '  max-width:  none !important;',
-        '  min-width:  0    !important;',
-        '  height:     100% !important;',
-        '  max-height: none !important;',
-        '  position:   relative !important;',
-        '  box-shadow: none     !important;',
-        '  left:       0        !important;',
-        '  right:      0        !important;',
-        '  bottom:     auto     !important;',
+        '  width:            100% !important;',
+        '  max-width:        none !important;',
+        '  min-width:        0    !important;',
+        '  height:           100% !important;',
+        '  max-height:       none !important;',
+        '  min-height:       0    !important;',
+        '  position:         relative !important;',
+        '  box-shadow:       none     !important;',
+        '  left:             0        !important;',
+        '  right:            0        !important;',
+        '  bottom:           auto     !important;',
+        '  background-color: var(--df-messenger-chat-background-color, #faf5ff) !important;',
         '}',
 
         /* ── Respetar saltos de línea en burbujas ────────────────────── */
@@ -377,6 +379,55 @@
       });
     }
 
+    /* ── PARCHE TEMPORAL: ocultar chips por texto exacto ────────────────
+       El chip "Menú principal" viene de la respuesta del agente en la
+       consola de Dialogflow ES (no de este archivo). Lo correcto es
+       borrarlo ahí (Intent → Responses → Custom Payload/Chips). Esta
+       función es un parche visual mientras tanto: busca chips por su
+       texto y los oculta sin tocar el intent. Agregá o quitá textos
+       en TEXTOS_CHIP_OCULTOS según necesites. ──────────────────────── */
+    var TEXTOS_CHIP_OCULTOS = ['Menú principal'];
+
+    function ocultarChipsPorTexto() {
+      var df = document.querySelector('df-messenger');
+      if (!df) return;
+
+      var sels = ['df-chip', '.df-chip', '[part="chip"]', 'button[class*="chip"]'];
+
+      function recorrer(root) {
+        if (!root || !root.querySelectorAll) return;
+        sels.forEach(function (sel) {
+          try {
+            root.querySelectorAll(sel).forEach(function (el) {
+              var texto = (el.textContent || '').trim();
+              if (TEXTOS_CHIP_OCULTOS.indexOf(texto) !== -1) {
+                el.style.cssText =
+                  'display:none!important;visibility:hidden!important;' +
+                  'opacity:0!important;pointer-events:none!important;' +
+                  'width:0!important;height:0!important;margin:0!important;overflow:hidden!important;';
+              }
+            });
+          } catch (e) {}
+        });
+      }
+
+      /* Recorre los niveles conocidos del Shadow DOM donde viven los chips */
+      recorrer(df.shadowRoot);
+      if (df.shadowRoot) {
+        var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+        if (dfChat && dfChat.shadowRoot) {
+          recorrer(dfChat.shadowRoot);
+          var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+          if (dfMsgList && dfMsgList.shadowRoot) {
+            recorrer(dfMsgList.shadowRoot);
+            dfMsgList.shadowRoot.querySelectorAll('df-message-bubble').forEach(function (bubble) {
+              if (bubble.shadowRoot) recorrer(bubble.shadowRoot);
+            });
+          }
+        }
+      }
+    }
+
 
 
     /* ══════════════════════════════════════════════════════════════════
@@ -392,6 +443,7 @@
         });
         if (hayNuevos) {
           ocultarLauncher();
+          ocultarChipsPorTexto();
           aplicarEstilos();
         }
       });
@@ -402,6 +454,7 @@
     window.addEventListener('dfMessengerLoaded', function () {
       aplicarEstilos();
       ocultarLauncher();
+      ocultarChipsPorTexto();
       inyectarEnTodosLosNiveles();
     });
 
@@ -410,6 +463,7 @@
       setTimeout(function () {
         aplicarEstilos();
         ocultarLauncher();
+        ocultarChipsPorTexto();
         inyectarEnTodosLosNiveles();
       }, ms);
     });
@@ -493,15 +547,23 @@
       '  min-height:   44px !important;',
       '}',
 
-      /* ── Lista de mensajes: ocupa el espacio sobrante, scroll propio ─ */
+      /* ── Lista de mensajes: ocupa el espacio sobrante, scroll propio ───
+         min-height:0 es la clave: sin esto, un hijo flex nunca se
+         achica por debajo del tamaño de su contenido (default:
+         min-height:auto), y al insertar chips dinámicos el contenedor
+         "revienta" hacia abajo dejando expuesto el fondo gris del
+         wrapper interno de Dialogflow. height:100% se quita porque
+         entra en conflicto con flex:1 1 auto y queda con el valor
+         viejo (previo a los chips) hasta el próximo reflow forzado. */
       '#messageList,',
       'df-message-list,',
       '.message-list, .chat-body,',
       '.messages-container {',
-      '  flex:         1 1 auto !important;',
-      '  overflow-y:   auto     !important;',
-      '  height:       100%     !important;',
-      '  max-height:   100%     !important;',
+      '  flex:             1 1 auto !important;',
+      '  min-height:       0        !important;',
+      '  overflow-y:       auto     !important;',
+      '  overflow-x:       hidden   !important;',
+      '  background-color: var(--df-messenger-chat-background-color, #faf5ff) !important;',
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
