@@ -233,18 +233,41 @@
         '  --df-messenger-chat-window-height: 100%  !important;',
         '}',
 
-        /* ── Forzar ancho/alto 100% Y estructura de columna en los
-               wrappers internos reales (.chat-wrapper confirmado por
+        /* ── (1) HOST del chat: #df-chat-wrapper es el id real que
+               confirmaste sobre el elemento <df-messenger-chat>. Se le
+               da altura ABSOLUTA (100vh) en vez de porcentual: así no
+               depende de que toda la cadena de ancestros tenga un alto
+               explícito para resolver el %, que es un problema clásico
+               de CSS y probablemente la causa de fondo del espacio
+               vacío. ─────────────────────────────────────────────── */
+        '#df-chat-wrapper,',
+        'df-messenger-chat {',
+        '  display:          flex   !important;',
+        '  flex-direction:   column !important;',
+        '  overflow:         hidden !important;',
+        '  width:            100%  !important;',
+        '  max-width:        none  !important;',
+        '  min-width:        0     !important;',
+        '  height:           100vh !important;',
+        '  max-height:       none  !important;',
+        '  min-height:       0     !important;',
+        '  position:         relative !important;',
+        '  box-shadow:       none     !important;',
+        '  background-color: var(--df-messenger-chat-background-color, #faf5ff) !important;',
+        '}',
+
+        /* ── (2) Wrappers internos reales (.chat-wrapper confirmado por
                Google como el div que Dialogflow redimensiona al abrir
-               el chat). Sin display:flex + flex-direction:column acá,
-               el "flex:1 1 auto" de la lista de mensajes no tiene
+               el chat): 100% relativo al host de arriba, que ahora
+               siempre tiene una altura resuelta (100vh). Sin
+               display:flex + flex-direction:column acá, el
+               "flex:1 1 auto" de la lista de mensajes no tendría
                ningún efecto, porque esa propiedad solo funciona si el
                padre inmediato es un contenedor flex. ─────────────── */
         '.df-messenger-wrapper,',
         '.chat-wrapper,',
         '.chat-window,',
-        '.messenger-container,',
-        'df-messenger-chat {',
+        '.messenger-container {',
         '  display:          flex   !important;',
         '  flex-direction:   column !important;',
         '  overflow-x:       hidden !important;',
@@ -550,24 +573,51 @@
       '}',
 
       /* ── Lista de mensajes: ocupa el espacio sobrante, scroll propio ───
-         min-height:0 es la clave: sin esto, un hijo flex nunca se
-         achica por debajo del tamaño de su contenido (default:
-         min-height:auto), y al insertar chips dinámicos el contenedor
-         "revienta" hacia abajo dejando expuesto el fondo gris del
-         wrapper interno de Dialogflow. height:100% se quita porque
-         entra en conflicto con flex:1 1 auto y queda con el valor
-         viejo (previo a los chips) hasta el próximo reflow forzado. */
+         flex:1 1 auto + height:100% + min-height:0 es la combinación
+         robusta: height:100% le da una base de tamaño clara (en vez de
+         partir del tamaño de su contenido), flex-shrink:1 (incluido en
+         el shorthand) permite que se achique para dejarle lugar al
+         título e input, y min-height:0 evita el bug clásico de Flexbox
+         donde un hijo nunca se achica por debajo del tamaño de su
+         contenido (default: min-height:auto), que es lo que "reventaba"
+         el contenedor al insertar chips dinámicos. ─────────────────── */
       '#messageList,',
       'df-message-list,',
       '.message-list, .chat-body,',
       '.messages-container {',
       '  flex:             1 1 auto !important;',
+      '  height:           100%     !important;',
       '  min-height:       0        !important;',
       '  overflow-y:       auto     !important;',
       '  overflow-x:       hidden   !important;',
       '  width:            100%     !important;',
       '  max-width:        100%     !important;',
       '  background-color: var(--df-messenger-chat-background-color, #faf5ff) !important;',
+      '}',
+
+      /* ── RED DE SEGURIDAD: por si "df-message-list" no es el nombre
+         real del elemento del medio en esta versión de Dialogflow ES.
+         Deducimos "cuál es" sin necesitar su nombre: dentro de
+         .chat-wrapper (confirmado), TODO hijo directo crece por
+         defecto para ocupar el espacio libre; después los dos hijos
+         que SÍ conocemos con certeza (titlebar e input, confirmados)
+         se anclan de nuevo a su tamaño de contenido. Así, sea cual sea
+         el tag/clase real del medio, termina con flex:1 1 auto. ──── */
+      '.chat-wrapper > *,',
+      '.chat-window > *,',
+      '.messenger-container > * {',
+      '  flex:       1 1 auto !important;',
+      '  min-height: 0        !important;',
+      '  overflow-y: auto     !important;',
+      '}',
+      '.chat-wrapper > df-messenger-titlebar,',
+      '.chat-wrapper > df-messenger-user-input,',
+      '.chat-window > df-messenger-titlebar,',
+      '.chat-window > df-messenger-user-input,',
+      '.messenger-container > df-messenger-titlebar,',
+      '.messenger-container > df-messenger-user-input {',
+      '  flex:       0 0 auto !important;',
+      '  overflow:   visible  !important;',
       '}',
 
       /* ── Footer / barra de entrada: anclada e inamovible ─────────── */
