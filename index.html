@@ -641,6 +641,42 @@
       try { shadowRoot.appendChild(s); } catch (e) {}
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       OBSERVADORES DENTRO DEL SHADOW DOM (la pieza que faltaba)
+       El MutationObserver de más arriba solo mira document.body, que
+       está AFUERA de todo Shadow DOM: nunca ve cuándo Dialogflow (Lit)
+       agrega un mensaje o un chip nuevo dentro de df-message-list,
+       porque eso ocurre encapsulado varios niveles adentro. Como Lit
+       puede volver a pintar ese pedazo del árbol en cada mensaje nuevo,
+       nuestro <style> inyectado se puede borrar en el momento exacto en
+       que aparece un chip — y sin esto, nada lo vuelve a poner hasta
+       que el usuario recarga la página. Acá enganchamos un observer
+       DEDICADO a cada Shadow Root real, apenas queda al alcance, para
+       que la reinyección ocurra sola durante TODA la sesión, no solo
+       en los primeros segundos. ─────────────────────────────────────── */
+    var _shadowsObservados = new WeakSet();
+    var _reaplicarPendiente = false;
+
+    function reaplicarTodo() {
+      if (_reaplicarPendiente) return;
+      _reaplicarPendiente = true;
+      setTimeout(function () {
+        _reaplicarPendiente = false;
+        aplicarEstilos();
+        ocultarLauncher();
+        ocultarChipsPorTexto();
+        inyectarEnTodosLosNiveles();
+      }, 30); // pequeño debounce: agrupa varias mutaciones seguidas en una sola pasada
+    }
+
+    function observarShadow(root) {
+      if (!root || _shadowsObservados.has(root)) return;
+      _shadowsObservados.add(root);
+      try {
+        new MutationObserver(reaplicarTodo).observe(root, { childList: true, subtree: true });
+      } catch (e) {}
+    }
+
     /* ── Perfora recursivamente todos los shadow roots conocidos ──────── */
     function inyectarEnTodosLosNiveles() {
       var df = document.querySelector('df-messenger');
@@ -648,21 +684,27 @@
 
       /* N1 — df-messenger */
       inyectarLinebreaks(df.shadowRoot, 'lb-n1');
+      observarShadow(df.shadowRoot);
 
       /* N2 — df-messenger-chat */
       var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
       if (!dfChat || !dfChat.shadowRoot) return;
       inyectarLinebreaks(dfChat.shadowRoot, 'lb-n2');
+      observarShadow(dfChat.shadowRoot);
 
-      /* N2b — df-message-list (hermano dentro de df-messenger-chat) */
+      /* N2b — df-message-list (hermano dentro de df-messenger-chat):
+         ACÁ es donde realmente importa observar, porque acá es donde
+         Lit agrega cada df-message-bubble nueva (mensajes y chips). */
       var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
       if (dfMsgList && dfMsgList.shadowRoot) {
         inyectarLinebreaks(dfMsgList.shadowRoot, 'lb-msglist');
+        observarShadow(dfMsgList.shadowRoot);
 
         /* N3 — df-message-bubble: una por cada respuesta del bot */
         dfMsgList.shadowRoot.querySelectorAll('df-message-bubble').forEach(function (bubble, i) {
           if (bubble.shadowRoot) {
             inyectarLinebreaks(bubble.shadowRoot, 'lb-bubble-' + i);
+            observarShadow(bubble.shadowRoot);
           }
         });
       }
@@ -671,12 +713,21 @@
       var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
       if (dfTitle && dfTitle.shadowRoot) {
         inyectarLinebreaks(dfTitle.shadowRoot, 'lb-title');
+        observarShadow(dfTitle.shadowRoot);
+      }
+
+      /* N3 — df-messenger-user-input */
+      var dfInput = dfChat.shadowRoot.querySelector('df-messenger-user-input');
+      if (dfInput && dfInput.shadowRoot) {
+        observarShadow(dfInput.shadowRoot);
       }
     }
 
-    /* inyectarEnTodosLosNiveles() ya se llama desde dfMessengerLoaded,
-       los fallbacks y el arranque inicial. El MutationObserver la
-       re-ejecuta automáticamente a través de aplicarEstilos(). */
+    /* inyectarEnTodosLosNiveles() se llama desde dfMessengerLoaded, los
+       fallbacks, el arranque inicial, Y AHORA TAMBIÉN desde los
+       observers dedicados de cada Shadow Root (ver observarShadow más
+       arriba) — esa es la parte que realmente sostiene el fix durante
+       toda la conversación, no solo los primeros segundos. */
   </script>
 
 </body>
