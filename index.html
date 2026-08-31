@@ -501,5 +501,68 @@
        re-ejecuta automáticamente a través de aplicarEstilos(). */
   </script>
 
+  <script>
+    (function fixDialogflowLayout() {
+      const injectShadowStyles = () => {
+        const messenger = document.querySelector('df-messenger');
+        if (!messenger) return;
+        // 1. Corrección del botón launcher
+        messenger.style.setProperty('display', 'block', 'important');
+        messenger.style.setProperty('margin', '0 auto', 'important');
+        const chat = messenger.shadowRoot?.querySelector('df-messenger-chat');
+        if (!chat || !chat.shadowRoot) return;
+        // 2. Inyección de CSS en Shadow DOM N2 (Caja y Lista de Mensajes)
+        let styleTag = chat.shadowRoot.querySelector('#df-custom-fix');
+        if (!styleTag) {
+          styleTag = document.createElement('style');
+          styleTag.id = 'df-custom-fix';
+          chat.shadowRoot.appendChild(styleTag);
+        }
+        styleTag.textContent = `
+          :host {
+            height: 100% !important;
+            max-height: 100% !important;
+          }
+          .chat-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            box-sizing: border-box !important;
+          }
+          df-message-list {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            height: auto !important;
+            overflow-y: auto !important;
+          }
+          df-messenger-user-input {
+            flex-shrink: 0 !important;
+            margin-top: auto !important;
+            display: block !important;
+          }
+        `;
+      };
+      // Observador continuo para aplicar el fix apenas se abra o renderice el chat
+      const observer = new MutationObserver(() => {
+        injectShadowStyles();
+      });
+      document.addEventListener('DOMContentLoaded', () => {
+        injectShadowStyles();
+        const messenger = document.querySelector('df-messenger');
+        if (messenger) {
+          observer.observe(messenger, { childList: true, subtree: true });
+        }
+      });
+
+      // Re-ejecutar en apertura
+      window.addEventListener('df-chat-open-changed', () => {
+        setTimeout(injectShadowStyles, 50);
+        setTimeout(injectShadowStyles, 200);
+      });
+    })();
+  </script>
+
 </body>
 </html>
