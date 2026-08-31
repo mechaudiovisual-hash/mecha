@@ -553,5 +553,38 @@
     document.addEventListener('DOMContentLoaded', corregirChatYBotones);
   </script>
 
+  <script>
+    function corregirCentradoTexto() {
+      const messenger = document.querySelector('df-messenger');
+      if (!messenger || !messenger.shadowRoot) return;
+
+      const chat = messenger.shadowRoot.querySelector('df-messenger-chat');
+      if (chat && chat.shadowRoot) {
+        let style = chat.shadowRoot.querySelector('#fix-chip-centering');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = 'fix-chip-centering';
+          chat.shadowRoot.appendChild(style);
+        }
+
+        style.textContent = `
+          /* Corregir el centrado vertical del texto en los chips */
+          .df-chip, df-chip, button.df-chip {
+            display: inline-flex !important;
+            align-items: center !important; /* Centrado vertical flexible de hijos */
+            justify-content: center !important; /* Centrado horizontal flexible */
+            height: auto !important; /* Altura flexible */
+            padding: 8px 14px !important; /* Padding uniforme */
+            line-height: normal !important; /* Dejar que el navegador maneje line-height */
+            box-sizing: border-box !important;
+          }
+        `;
+      }
+    }
+    window.addEventListener('df-messenger-loaded', corregirCentradoTexto);
+    window.addEventListener('df-chat-open-changed', corregirCentradoTexto);
+    document.addEventListener('DOMContentLoaded', corregirCentradoTexto);
+  </script>
+
 </body>
 </html>
