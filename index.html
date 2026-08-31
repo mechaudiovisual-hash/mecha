@@ -1,48 +1,352 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-  </script>
-  <script>
-    function bajarTextoChip() {
-    function inyectarEstilo(root, id, css) {
-      let style = root.querySelector('#' + id);
-      if (!style) {
-        style = document.createElement('style');
-        style.id = id;
-        root.appendChild(style);
-      }
-      style.textContent = css;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mecha - Asistente Virtual</title>
+
+  <!-- Fuente Roboto -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Script oficial de Dialogflow ES Messenger (CDN Google, sin XSS) -->
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+
+  <style>
+    /* ─── Reset base ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f4edf7;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
-    function aplicarFixDialogflowProfundo() {
-      const messenger = document.querySelector('df-messenger');
-      if (!messenger || !messenger.shadowRoot) return;
-      // Capa 2: df-messenger-chat
-      const chat = messenger.shadowRoot.querySelector('df-messenger-chat');
-      if (chat && chat.shadowRoot) {
-        let style = chat.shadowRoot.querySelector('#fix-chip-text-down');
+
+    .caja-mecha-premium {
+      position:       fixed  !important;
+      top:            0      !important;
+      left:           0      !important;
+      width:          100vw  !important;
+      height:         100vh  !important;
+      margin:         0      !important;
+      padding:        0      !important;
+      max-width:      none   !important;
+      border-radius:  0      !important;
+      overflow:       hidden !important;
+      display:        flex   !important;
+      flex-direction: column !important;
+    }
+
+    df-messenger {
+      position: absolute !important;
+      inset: 0           !important;
+      width:  100%       !important;
+      height: 100%       !important;
+      display:        flex   !important;
+      flex-direction: column !important;
+      overflow:       hidden !important;
+      --df-messenger-chat-window-width:  100% !important;
+      --df-messenger-chat-window-height: 100% !important;
+      --df-messenger-shadow-wrapper-background: transparent;
+      --df-messenger-brand-color:                    #8E44AD;
+      --df-messenger-titlebar-background:            #8E44AD;
+      --df-messenger-titlebar-font-color:            #ffffff;
+      --df-messenger-titlebar-icon-color:            #ffffff;
+      --df-messenger-message-bot-background:         #f0e5fc;
+      --df-messenger-message-bot-font-color:         #2d0052;
+      --df-messenger-message-user-background:        #8E44AD;
+      --df-messenger-message-user-font-color:        #ffffff;
+      --df-messenger-chat-background-color:          #faf5ff;
+      --df-messenger-input-box-color:                #f3e8ff;
+      --df-messenger-input-font-color:               #2d0052;
+      --df-messenger-input-placeholder-font-color:   #9b7bb8;
+      --df-messenger-send-icon:                      #8E44AD;
+      --df-messenger-button-background:              #f0e5fc;
+      --df-messenger-button-font-color:              #6C2D9E;
+      --df-messenger-button-border:                  1px solid #8E44AD;
+      --df-messenger-font-color:                     #2d0052;
+      --df-messenger-font-family:                    'Segoe UI', Arial, sans-serif;
+      font-family:                                   'Roboto', sans-serif !important;
+    }
+
+    df-messenger >>> .df-messenger-wrapper button#widgetIcon,
+    df-messenger::part(launcher),
+    df-messenger-chat-bubble,
+    df-messenger::part(chat-bubble) {
+      display:        none    !important;
+      visibility:     hidden  !important;
+      pointer-events: none    !important;
+    }
+
+    df-messenger *,
+    df-messenger >>> *,
+    df-messenger-chat *,
+    df-message-list *,
+    df-message-bubble * {
+      white-space: pre-wrap !important;
+    }
+
+    df-messenger::part(chip) {
+      background-color: #f0e5fc  !important;
+      color:            #6C2D9E  !important;
+      border:           1px solid #8E44AD !important;
+      border-radius:    20px     !important;
+      padding:          6px 14px !important;
+      font-family:      'Roboto', sans-serif !important;
+      font-size:        14px     !important;
+      cursor:           pointer  !important;
+      display:          inline-flex !important;
+      align-items:      center   !important;
+      justify-content:  center   !important;
+    }
+
+    @media (max-width: 480px) {
+      df-messenger {
+        --df-messenger-chat-window-width:  100vw !important;
+        --df-messenger-chat-window-height: 100vh !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="caja-mecha-premium">
+    <df-messenger
+      chat-icon=""
+      agent-id="1ee5e1a1-50c3-41dc-a78c-b86a6be8cdee"
+      language-code="es"
+      project-id="mecha-nzbu"
+      chat-title="Mecha"
+      expand="true">
+    </df-messenger>
+  </div>
+
+  <script>
+    function generarCSS() {
+      return [
+        ':host {',
+        '  display:        flex           !important;',
+        '  flex-direction: column         !important;',
+        '  width:          100%           !important;',
+        '  height:         100%           !important;',
+        '  max-width:      none           !important;',
+        '  max-height:     none           !important;',
+        '  overflow:       hidden         !important;',
+        '}',
+        '.chat-wrapper, .df-messenger-wrapper {',
+        '  display:        flex           !important;',
+        '  flex-direction: column         !important;',
+        '  width:          100%           !important;',
+        '  height:         100%           !important;',
+        '  max-height:     none           !important;',
+        '  overflow:       hidden         !important;',
+        '  flex:           1 1 auto       !important;',
+        '}',
+        'df-message-list, .message-list, [part="message-list"] {',
+        '  flex:           1 1 auto       !important;',
+        '  height:         auto           !important;',
+        '  min-height:     0              !important;',
+        '  max-height:     none           !important;',
+        '  overflow-y:     auto           !important;',
+        '  overflow-x:     hidden         !important;',
+        '}',
+        'df-messenger-user-input, [part="user-input"] {',
+        '  flex-shrink:    0              !important;',
+        '  width:          100%           !important;',
+        '  display:        block          !important;',
+        '}',
+      ].join('\n');
+    }
+
+    function inyectar(shadowRoot, id) {
+      if (!shadowRoot) return;
+      if (shadowRoot.querySelector && shadowRoot.querySelector('#' + id)) return;
+      var s = document.createElement('style');
+      s.id = id;
+      s.textContent = generarCSS();
+      try { shadowRoot.appendChild(s); } catch (e) {}
+    }
+
+    function aplicarEstilos() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+      inyectar(df.shadowRoot, 'css-n1');
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
+      inyectar(dfChat.shadowRoot, 'css-n2');
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (dfMsgList && dfMsgList.shadowRoot) {
+        inyectar(dfMsgList.shadowRoot, 'css-msglist');
+      }
+      var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
+      if (dfTitle && dfTitle.shadowRoot) {
+        inyectar(dfTitle.shadowRoot, 'css-title');
+      }
+    }
+
+    function ocultarLauncher() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+      [
+        '.df-messenger-wrapper button#widgetIcon',
+        'df-messenger-chat-bubble',
+        '[part="chat-bubble"]',
+        '[part="launcher"]',
+        '.df-chat-bubble-container',
+      ].forEach(function (sel) {
+        df.shadowRoot.querySelectorAll(sel).forEach(function (el) {
+          el.style.setProperty('display',        'none',    'important');
+          el.style.setProperty('visibility',     'hidden',  'important');
+          el.style.setProperty('pointer-events', 'none',    'important');
+        });
+      });
+    }
+
+    function iniciarObserver() {
+      var df = document.querySelector('df-messenger');
+      if (!df) return;
+      var obs = new MutationObserver(function () {
+        aplicarEstilos();
+        ocultarLauncher();
+      });
+      obs.observe(df, { childList: true, subtree: true });
+    }
+
+    function dfMessengerLoaded() {
+      aplicarEstilos();
+      ocultarLauncher();
+      iniciarObserver();
+    }
+
+    window.addEventListener('df-messenger-loaded',  dfMessengerLoaded);
+    window.addEventListener('df-chat-open-changed', function () {
+      setTimeout(aplicarEstilos,   80);
+      setTimeout(ocultarLauncher,  80);
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(dfMessengerLoaded, 500);
+      setTimeout(dfMessengerLoaded, 1500);
+    });
+    window.addEventListener('load', function () {
+      setTimeout(dfMessengerLoaded, 300);
+    });
+
+    var CSS_LINEBREAKS = [
+      'df-response-message p,',
+      'df-response-message span,',
+      'df-response-message div,',
+      '.df-message-text,',
+      '[part="message-text"],',
+      '.message-text,',
+      '.text-bubble {',
+      '  white-space: pre-wrap !important;',
+      '  word-break:  break-word !important;',
+      '}',
+      '',
+      'df-messenger-user-input {',
+      '  height:      auto !important;',
+      '  min-height:  60px !important;',
+      '  width:       100% !important;',
+      '}'
+    ].join('\n');
+
+    function inyectarLinebreaks(shadowRoot, id) {
+      if (!shadowRoot) return;
+      if (shadowRoot.querySelector && shadowRoot.querySelector('#' + id)) return;
+      var s = document.createElement('style');
+      s.id = id;
+      s.textContent = CSS_LINEBREAKS;
+      try { shadowRoot.appendChild(s); } catch (e) {}
+    }
+
+    function inyectarEnTodosLosNiveles() {
+      var df = document.querySelector('df-messenger');
+      if (!df || !df.shadowRoot) return;
+      inyectarLinebreaks(df.shadowRoot, 'lb-n1');
+      var dfChat = df.shadowRoot.querySelector('df-messenger-chat');
+      if (!dfChat || !dfChat.shadowRoot) return;
+      inyectarLinebreaks(dfChat.shadowRoot, 'lb-n2');
+      var dfMsgList = dfChat.shadowRoot.querySelector('df-message-list');
+      if (dfMsgList && dfMsgList.shadowRoot) {
+        inyectarLinebreaks(dfMsgList.shadowRoot, 'lb-msglist');
+        dfMsgList.shadowRoot.querySelectorAll('df-message-bubble').forEach(function (bubble, i) {
+          if (bubble.shadowRoot) {
+            inyectarLinebreaks(bubble.shadowRoot, 'lb-bubble-' + i);
+          }
+        });
+      }
+      var dfTitle = dfChat.shadowRoot.querySelector('df-messenger-titlebar');
+      if (dfTitle && dfTitle.shadowRoot) {
+        inyectarLinebreaks(dfTitle.shadowRoot, 'lb-title');
+      }
+    }
+  </script>
+
+  <script>
+    (function() {
+      function aplicarFixesDialogflow() {
+        const messenger = document.querySelector('df-messenger');
+        if (!messenger || !messenger.shadowRoot) return;
+
+        const chat = messenger.shadowRoot.querySelector('df-messenger-chat');
+        if (chat && chat.shadowRoot) {
+          inyectarEstilo(chat.shadowRoot, 'fix-layout-capa2', `
+            .chat-wrapper {
+              display: flex !important;
+              flex-direction: column !important;
+              height: 100% !important;
+            }
+            df-message-list {
+              flex: 1 1 auto !important;
+              min-height: 0 !important;
+            }
+            df-messenger-user-input {
+              flex-shrink: 0 !important;
+            }
+          `);
+
+          const messageList = chat.shadowRoot.querySelector('df-message-list');
+          if (messageList && messageList.shadowRoot) {
+            inyectarEstilo(messageList.shadowRoot, 'fix-chips-capa3', `
+              .df-chip, df-chip, button.df-chip, .df-chip-wrapper {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding-top: 8px !important;
+                padding-bottom: 6px !important;
+                box-sizing: border-box !important;
+              }
+              .df-chip span, df-chip span, button.df-chip span {
+                transform: translateY(2px) !important;
+                display: inline-block !important;
+                line-height: 1 !important;
+              }
+            `);
+          }
+        }
+      }
+
+      function inyectarEstilo(root, id, css) {
+        let style = root.querySelector('#' + id);
         if (!style) {
           style = document.createElement('style');
-          style.id = 'fix-chip-text-down';
-          chat.shadowRoot.appendChild(style);
+          style.id = id;
+          root.appendChild(style);
         }
-        style.textContent = `
-          /* 1. Ajuste del contenedor del chip */
-          .df-chip, df-chip, button.df-chip {
-            display: inline-flex !important;
-            align-items: center !important;
-            padding-top: 12px !important;
-            padding-bottom: 6px !important;
-            box-sizing: border-box !important;
-        inyectarEstilo(chat.shadowRoot, 'fix-capa-2', `
-          .chat-wrapper {
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-          }
-          /* 2. Desplazamiento milimétrico del texto hacia abajo */
-          .df-chip span, df-chip span, button.df-chip span, .df-chip-wrapper {
-            transform: translateY(3px) !important;
-            display: inline-block !important;
-          df-message-list {
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
+        style.textContent = css;
+      }
+
+      ['DOMContentLoaded', 'df-messenger-loaded', 'df-chat-open-changed'].forEach(evt => {
+        window.addEventListener(evt, () => setTimeout(aplicarFixesDialogflow, 100));
+      });
+    })();
+  </script>
+
+</body>
+</html>
