@@ -554,40 +554,59 @@
   </script>
 
   <script>
-    function bajarTextoChip() {
+    function inyectarEstilo(root, id, css) {
+      let style = root.querySelector('#' + id);
+      if (!style) {
+        style = document.createElement('style');
+        style.id = id;
+        root.appendChild(style);
+      }
+      style.textContent = css;
+    }
+
+    function aplicarFixDialogflowProfundo() {
       const messenger = document.querySelector('df-messenger');
       if (!messenger || !messenger.shadowRoot) return;
 
+      // Capa 2: df-messenger-chat
       const chat = messenger.shadowRoot.querySelector('df-messenger-chat');
       if (chat && chat.shadowRoot) {
-        let style = chat.shadowRoot.querySelector('#fix-chip-text-down');
-        if (!style) {
-          style = document.createElement('style');
-          style.id = 'fix-chip-text-down';
-          chat.shadowRoot.appendChild(style);
+        inyectarEstilo(chat.shadowRoot, 'fix-capa-2', `
+          .chat-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+          }
+          df-message-list {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+          }
+          df-messenger-user-input {
+            flex-shrink: 0 !important;
+          }
+        `);
+
+        // Capa 3: df-message-list (Aquí viven los botones/chips)
+        const messageList = chat.shadowRoot.querySelector('df-message-list');
+        if (messageList && messageList.shadowRoot) {
+          inyectarEstilo(messageList.shadowRoot, 'fix-capa-3-chips', `
+            .df-chip, df-chip, button, .df-chip-wrapper {
+              padding-top: 10px !important;
+              padding-bottom: 4px !important;
+              align-items: center !important;
+            }
+            .df-chip span, df-chip span, button span, div {
+              transform: translateY(3px) !important;
+              display: inline-block !important;
+            }
+          `);
         }
-
-        style.textContent = `
-          /* 1. Ajuste del contenedor del chip */
-          .df-chip, df-chip, button.df-chip {
-            display: inline-flex !important;
-            align-items: center !important;
-            padding-top: 12px !important;
-            padding-bottom: 6px !important;
-            box-sizing: border-box !important;
-          }
-
-          /* 2. Desplazamiento milimétrico del texto hacia abajo */
-          .df-chip span, df-chip span, button.df-chip span, .df-chip-wrapper {
-            transform: translateY(3px) !important;
-            display: inline-block !important;
-          }
-        `;
       }
     }
-    window.addEventListener('df-messenger-loaded', bajarTextoChip);
-    window.addEventListener('df-chat-open-changed', bajarTextoChip);
-    document.addEventListener('DOMContentLoaded', bajarTextoChip);
+
+    ['DOMContentLoaded', 'df-messenger-loaded', 'df-chat-open-changed'].forEach(evt => {
+      window.addEventListener(evt, () => setTimeout(aplicarFixDialogflowProfundo, 150));
+    });
   </script>
 
 </body>
