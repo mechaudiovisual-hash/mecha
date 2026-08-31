@@ -554,36 +554,40 @@
   </script>
 
   <script>
-    function corregirCentradoTexto() {
+    function bajarTextoChip() {
       const messenger = document.querySelector('df-messenger');
       if (!messenger || !messenger.shadowRoot) return;
 
       const chat = messenger.shadowRoot.querySelector('df-messenger-chat');
       if (chat && chat.shadowRoot) {
-        let style = chat.shadowRoot.querySelector('#fix-chip-centering');
+        let style = chat.shadowRoot.querySelector('#fix-chip-text-down');
         if (!style) {
           style = document.createElement('style');
-          style.id = 'fix-chip-centering';
+          style.id = 'fix-chip-text-down';
           chat.shadowRoot.appendChild(style);
         }
 
         style.textContent = `
-          /* Corregir el centrado vertical del texto en los chips */
+          /* 1. Ajuste del contenedor del chip */
           .df-chip, df-chip, button.df-chip {
             display: inline-flex !important;
-            align-items: center !important; /* Centrado vertical flexible de hijos */
-            justify-content: center !important; /* Centrado horizontal flexible */
-            height: auto !important; /* Altura flexible */
-            padding: 8px 14px !important; /* Padding uniforme */
-            line-height: normal !important; /* Dejar que el navegador maneje line-height */
+            align-items: center !important;
+            padding-top: 12px !important;
+            padding-bottom: 6px !important;
             box-sizing: border-box !important;
+          }
+
+          /* 2. Desplazamiento milimétrico del texto hacia abajo */
+          .df-chip span, df-chip span, button.df-chip span, .df-chip-wrapper {
+            transform: translateY(3px) !important;
+            display: inline-block !important;
           }
         `;
       }
     }
-    window.addEventListener('df-messenger-loaded', corregirCentradoTexto);
-    window.addEventListener('df-chat-open-changed', corregirCentradoTexto);
-    document.addEventListener('DOMContentLoaded', corregirCentradoTexto);
+    window.addEventListener('df-messenger-loaded', bajarTextoChip);
+    window.addEventListener('df-chat-open-changed', bajarTextoChip);
+    document.addEventListener('DOMContentLoaded', bajarTextoChip);
   </script>
 
 </body>
