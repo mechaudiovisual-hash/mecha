@@ -502,66 +502,55 @@
   </script>
 
   <script>
-    (function fixDialogflowLayout() {
-      const injectShadowStyles = () => {
-        const messenger = document.querySelector('df-messenger');
-        if (!messenger) return;
-        // 1. Corrección del botón launcher
-        messenger.style.setProperty('display', 'block', 'important');
-        messenger.style.setProperty('margin', '0 auto', 'important');
-        const chat = messenger.shadowRoot?.querySelector('df-messenger-chat');
-        if (!chat || !chat.shadowRoot) return;
-        // 2. Inyección de CSS en Shadow DOM N2 (Caja y Lista de Mensajes)
-        let styleTag = chat.shadowRoot.querySelector('#df-custom-fix');
-        if (!styleTag) {
-          styleTag = document.createElement('style');
-          styleTag.id = 'df-custom-fix';
-          chat.shadowRoot.appendChild(styleTag);
+    function corregirChatYBotones() {
+      const messenger = document.querySelector('df-messenger');
+      if (!messenger || !messenger.shadowRoot) return;
+
+      const chat = messenger.shadowRoot.querySelector('df-messenger-chat');
+      if (chat && chat.shadowRoot) {
+        let style = chat.shadowRoot.querySelector('#fix-caja-y-chips');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = 'fix-caja-y-chips';
+          chat.shadowRoot.appendChild(style);
         }
-        styleTag.textContent = `
-          :host {
-            height: 100% !important;
-            max-height: 100% !important;
-          }
+        style.textContent = `
+          /* 1. Contenedor principal en pantalla completa */
           .chat-wrapper {
             display: flex !important;
             flex-direction: column !important;
             height: 100% !important;
-            max-height: 100% !important;
+            min-height: 100vh !important;
             box-sizing: border-box !important;
           }
+          /* 2. Estirar la lista para empujar el input al fondo de la pantalla */
           df-message-list {
             flex: 1 1 auto !important;
             min-height: 0 !important;
-            max-height: none !important;
-            height: auto !important;
             overflow-y: auto !important;
           }
+          /* 3. Fijar la barra de entrada en el extremo inferior */
           df-messenger-user-input {
             flex-shrink: 0 !important;
             margin-top: auto !important;
-            display: block !important;
+            width: 100% !important;
+          }
+          /* 4. Corregir el espacio vertical del texto en los botones/chips */
+          .df-chip, df-chip, button.df-chip, .df-chip-wrapper {
+            line-height: 1.4 !important;
+            height: auto !important;
+            padding: 8px 14px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
           }
         `;
-      };
-      // Observador continuo para aplicar el fix apenas se abra o renderice el chat
-      const observer = new MutationObserver(() => {
-        injectShadowStyles();
-      });
-      document.addEventListener('DOMContentLoaded', () => {
-        injectShadowStyles();
-        const messenger = document.querySelector('df-messenger');
-        if (messenger) {
-          observer.observe(messenger, { childList: true, subtree: true });
-        }
-      });
+      }
+    }
 
-      // Re-ejecutar en apertura
-      window.addEventListener('df-chat-open-changed', () => {
-        setTimeout(injectShadowStyles, 50);
-        setTimeout(injectShadowStyles, 200);
-      });
-    })();
+    window.addEventListener('df-messenger-loaded', corregirChatYBotones);
+    window.addEventListener('df-chat-open-changed', corregirChatYBotones);
+    document.addEventListener('DOMContentLoaded', corregirChatYBotones);
   </script>
 
 </body>
